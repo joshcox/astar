@@ -9,13 +9,13 @@ class Goal implements IGoal {
 }
 
 class SelectorScore extends Score {
-  @Score.Cost.Discount('computerVision')
+  @Score.Cost.Discount()
   @Score.Binary()
   public computerVision(): boolean {
     return true;
   }
 
-  @Score.Heuristic.Penalty('anyUnilaterals')
+  @Score.Heuristic.Penalty()
   @Score.Binary()
   public anyUnilaterals(): boolean {
     return false;

@@ -4,12 +4,16 @@ export const CALCULATOR_METHODS = Symbol('Calculators');
 
 const Weighted =
   (type: 'discount' | 'penalty') =>
-    (key: string): MethodDecorator =>
+    (): MethodDecorator =>
       (
         target: any,
         propertyKey: string | symbol,
         descriptor: PropertyDescriptor,
       ): void => {
+        const weightName = typeof propertyKey === 'string'
+          ? propertyKey
+          : propertyKey.description;
+
         const originalMethod = descriptor.value;
 
         descriptor.value = function (
@@ -18,14 +22,14 @@ const Weighted =
         ): number {
           const weights =
             type === 'discount' ? this.options.discounts : this.options.penalties;
-          return originalMethod.apply(this, args) * (weights[key] ?? 0);
+          return originalMethod.apply(this, args) * (weights[weightName] ?? 0);
         };
 
         Reflect.defineMetadata(
           CALCULATOR_METHODS,
           [
             ...(Reflect.getMetadata(CALCULATOR_METHODS, target) || []),
-            { type, key, method: descriptor.value, propertyKey },
+            { type, key: weightName, method: descriptor.value },
           ],
           target,
         );
