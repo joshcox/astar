@@ -1,6 +1,10 @@
 import { Search } from "search";
 import { Node, NodeFactory, Score, ScoreOptions, IData, IGoal } from "./index";
 
+class Data implements IData {
+  id: string;
+}
+
 class Goal implements IGoal {
   satisfiedBy(node: Node<Data>): boolean {
     return !!node;
@@ -23,10 +27,6 @@ class SelectorScore extends Score {
   public anyUnilaterals(): boolean {
     return false;
   }
-}
-
-class Data implements IData {
-  id: string;
 }
 
 const successors = (candidateSet: { slug: string }[]) =>
