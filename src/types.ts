@@ -1,5 +1,4 @@
 export interface IGoal {
-  size: number;
   satisfiedBy(node: INode<IData>): boolean;
 }
 
@@ -7,34 +6,34 @@ export interface IData {
   id: string;
 }
 
-export interface ScoreOptions {
-  defaultCost: number;
-  discounts: Record<string, number>;
-  penalties: Record<string, number>;
-}
-
 export interface IScore {
-  options: ScoreOptions;
   cost(): number;
   heuristic(): number;
 }
 
-export type NodeScoreFactory<Goal extends IGoal, Node extends INode<any>> =
-  (goal: Goal) => (node: Node) => IScore;
+export type ScoreFactory<Goal extends IGoal> =
+  (goal: Goal) => (data: IData) => IScore;
 
-export type NodeScoreFactory2<Goal extends IGoal, N extends INode<any>> =
-  ReturnType<NodeScoreFactory<Goal, N>>;
+export type NodeFactory<Data extends IData, Node extends INode<Data>> = (parent: Node, data: Data) => Node;
 
 export interface INode<Data extends IData> {
-  isRoot: boolean;
   depth: number;
   data: Data;
+  parent: INode<IData>;
   id(): string;
   compareF(other: INode<Data>): number;
   reconstruct(): Data[];
-  succeed(data: Data): INode<Data>;
+  succeed(node: INode<Data>): INode<Data>;
 }
 
 export interface INodeSuccessors<Data extends IData> {
-  [Symbol.iterator](): Iterable<INode<Data>>;
+  of(node: INode<IData>): Iterable<INode<Data>>;
+}
+
+export interface ISuccessors<Node extends INode<IData>> {
+  (node: Node): Iterable<Node>;
+}
+
+export interface IAStar<Data extends IData> {
+  search(root: INode<Data>, goal: IGoal): Data[] | null;
 }

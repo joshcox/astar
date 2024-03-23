@@ -1,25 +1,27 @@
-import { IData, IGoal, INode, IScore, NodeScoreFactory2 } from "types";
+import { IData, IGoal, INode, IScore, NodeFactory, NodeScoreFactory2 } from "types";
 
 export class Node<Data extends IData> implements INode<Data> {
-  private score: IScore;
   public depth: number;
   public children: Node<Data>[] = [];
-  public isRoot: boolean;
 
   constructor(
-    public parent: Node<Data> | null,
-    public data: Data | null,
-    private scoreFactory: NodeScoreFactory2<IGoal, INode<IData>>,
+    public parent: Node<Data>,
+    public data: Data,
+    private score: IScore,
   ) {
-    this.isRoot = this.parent === null;
-    this.depth = this.isRoot ? 0 : this.parent.depth + 1;
-    this.score = this.scoreFactory(this);
+    this.depth = this.parent.depth + 1;
   }
-  public id(): string {
-    if (this.isRoot) {
-      return '';
-    }
 
+  static factory(
+    this: new (p: Node<IData>, d: IData, s: IScore) => Node<IData>,
+    scoreFactory: NodeScoreFactory2<IGoal>
+  ): NodeFactory<IData, Node<IData>> {
+    return (parent, data) => new this(parent, data, scoreFactory(data));
+  }
+
+  static buildRoot = () => new Root();
+
+  public id(): string {
     let ids = [this.data.id];
     for (const ancestor of this.ancestors()) {
       ids.push(ancestor.data.id);
@@ -44,19 +46,17 @@ export class Node<Data extends IData> implements INode<Data> {
     return this.f() - other.f();
   }
 
-  public succeed(data: Data): Node<Data> {
-    const successor = new Node(this, data, this.scoreFactory);
-    this.children.push(successor);
-    return successor;
+  public succeed(node: Node<Data>): Node<Data> {
+    this.children.push(node);
+    return node;
   }
 
   private * ancestors(): Iterable<Node<Data>> {
     let node: Node<Data> = this;
-    if (node.parent !== null) {
+    if (!(node.parent instanceof Root)) {
       yield node.parent;
       node = node.parent;
     }
-    return node;
   }
 
   public reconstruct(): Data[] {
@@ -66,4 +66,12 @@ export class Node<Data extends IData> implements INode<Data> {
     }
     return data.reverse()
   }
+}
+
+export class Root<Data extends IData> extends Node<Data> {
+  constructor() {
+    super(<Node<Data>>null, <Data>{ id: 'root' }, <IScore>null);
+  }
+
+  isRoot: boolean = true;
 }

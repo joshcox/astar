@@ -51,3 +51,4 @@ export const Binary = (): MethodDecorator =>
       return originalMethod.apply(this, args) ? 1 : 0;
     };
   };
+

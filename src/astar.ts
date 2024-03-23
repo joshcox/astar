@@ -1,5 +1,5 @@
 import TinyQueue from "tinyqueue";
-import { IData, IGoal, INode, INodeSuccessors } from "types";
+import { IAStar, IData, IGoal, INode, ISuccessors } from "types";
 
 const isDefined = <T>(value: T | undefined | null): value is T =>
   value !== undefined && value !== null;
@@ -10,18 +10,17 @@ function assertsIsDefined<T>(value: T | undefined | null): asserts value is T {
   }
 }
 
-export class AStar<Data extends IData> {
+export class AStar<Data extends IData, Node extends INode<Data>> implements IAStar<Data> {
   constructor(
-    public root: INode<Data>,
-    public successors: INodeSuccessors<Data>
+    public successors: ISuccessors<Node>,
   ) { }
 
-  public search(goal: IGoal): Data[] | null {
+  public search(root: Node, goal: IGoal): Data[] | null {
     // The open list is a priority queue of nodes to be evaluated
-    const open = new TinyQueue<INode<Data>>([this.root], (a, b) => a.compareF(b));
+    const open = new TinyQueue<Node>([root], (a, b) => a.compareF(b));
     // The open set is a set of serialized values of nodes that have been queued
     // We maintain this for quick duplicate checking during successor generation
-    const openSet = new Set<string>([this.root.id()]);
+    const openSet = new Set<string>([root.id()]);
     // The closed list is a set of nodes that have already been evaluated
     const closed = new Set<string>();
 
@@ -40,7 +39,7 @@ export class AStar<Data extends IData> {
       }
       // Add unsatisfying node to the closed list
       closed.add(node.id());
-      for (const successor of this.successors[Symbol.iterator]()) {
+      for (const successor of this.successors(node)) {
         // If the successor is already queued, skip it
         if (openSet.has(successor.id())) {
           continue;
