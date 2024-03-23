@@ -2,41 +2,6 @@ import { IData, IGoal, IScore, ScoreFactory } from "types";
 
 const CALCULATOR_METHODS = Symbol('Calculators');
 
-const SubScore =
-  (type: 'discount' | 'penalty') =>
-    (): MethodDecorator =>
-      (target: any, key: string | symbol, descriptor: PropertyDescriptor): void => {
-        const weightName = typeof key === 'string'
-          ? key
-          : key.description;
-
-        const originalMethod = descriptor.value;
-        descriptor.value = function (this: Score, ...args: any[]): number {
-          const weights = type === 'discount'
-            ? this.options.discounts
-            : this.options.penalties;
-          return originalMethod.apply(this, args) * (weights[weightName] ?? 0);
-        };
-
-        Reflect.defineMetadata(
-          CALCULATOR_METHODS,
-          [
-            ...(Reflect.getMetadata(CALCULATOR_METHODS, target) || []),
-            { type, key: weightName, method: descriptor.value },
-          ],
-          target,
-        );
-      };
-
-const Binary = () =>
-  (_: any, __: string | symbol, descriptor: PropertyDescriptor): void => {
-    const originalMethod = descriptor.value;
-
-    descriptor.value = function (this: Score, ...args: any[]): number {
-      return originalMethod.apply(this, args) ? 1 : 0;
-    };
-  };
-
 export interface ScoreOptions {
   discounts: Record<string, number>;
   penalties: Record<string, number>;
@@ -76,7 +41,7 @@ export abstract class Score implements IScore {
     goal: IGoal,
     options: ScoreOptions
   ): ScoreFactory<Score> {
-    return node => new this(node, goal, options);
+    return data => new this(data, goal, options);
   }
 
   private subScores: SubScores = {
@@ -117,3 +82,36 @@ export abstract class Score implements IScore {
     return Math.max(penalties.reduce((acc, p) => acc + p(), 0), 0);
   }
 }
+
+function SubScore(type: 'discount' | 'penalty'): MethodDecorator {
+  return (target: any, key: string | symbol, descriptor: PropertyDescriptor): void => {
+    const weightName = typeof key === 'string'
+      ? key
+      : key.description;
+
+    const originalMethod = descriptor.value;
+    descriptor.value = function (this: Score, ...args: any[]): number {
+      const weights = type === 'discount'
+        ? this.options.discounts
+        : this.options.penalties;
+      return originalMethod.apply(this, args) * (weights[weightName] ?? 0);
+    };
+
+    Reflect.defineMetadata(
+      CALCULATOR_METHODS,
+      [
+        ...(Reflect.getMetadata(CALCULATOR_METHODS, target) || []),
+        { type, key: weightName, method: descriptor.value },
+      ],
+      target,
+    );
+  }
+}
+
+function Binary(_: any, __: string | symbol, descriptor: PropertyDescriptor): void {
+  const originalMethod = descriptor.value;
+
+  descriptor.value = function (this: Score, ...args: any[]): number {
+    return originalMethod.apply(this, args) ? 1 : 0;
+  };
+};

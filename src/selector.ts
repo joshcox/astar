@@ -1,5 +1,5 @@
 import { Search } from "search";
-import { AStar, Node, NodeFactory, Score, ScoreOptions, IData, IGoal } from "./index";
+import { Node, NodeFactory, Score, ScoreOptions, IData, IGoal } from "./index";
 
 class Goal implements IGoal {
   satisfiedBy(node: Node<Data>): boolean {
@@ -12,14 +12,14 @@ class SelectorScore extends Score {
   public baseCost = () => 1;
   public baseHeuristic = () => ((<{ size: number }><unknown>this.goal).size ?? 0) - this.data.id.length;
 
-  @Score.Sub.Cost.Discount()
-  @Score.Sub.Util.Binary()
+  @Score.Sub.Cost.Discount
+  @Score.Sub.Util.Binary
   public computerVision(): boolean {
     return true;
   }
 
-  @Score.Sub.Heuristic.Penalty()
-  @Score.Sub.Util.Binary()
+  @Score.Sub.Heuristic.Penalty
+  @Score.Sub.Util.Binary
   public anyUnilaterals(): boolean {
     return false;
   }
