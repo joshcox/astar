@@ -29,20 +29,25 @@ class Data implements IData {
   id: string;
 }
 
-export class Selector2 extends Search<Data, Node<Data>, Goal, Score> {
+const successors = (candidateSet: { slug: string }[]) =>
+  (factory: NodeFactory<Node<Data>>) =>
+    (node: Node<Data>): Node<Data>[] =>
+      candidateSet.map(e => node.succeed(factory(node, { id: e.slug })))
+
+export class Selector2 {
   constructor(
     private candidateSet: { slug: string }[],
-    scoreOptions: ScoreOptions
-  ) {
-    super(scoreOptions);
+    private scoreOptions: ScoreOptions
+  ) { }
+
+  public select(goal: Goal): Data[] | null {
+    return new Search(
+      Node,
+      SelectorScore,
+      this.scoreOptions,
+      successors(this.candidateSet)
+    ).select(goal);
   }
-
-  Score = SelectorScore;
-  Node = Node;
-
-  successors = (factory: NodeFactory<Node<Data>>) =>
-    (node: Node<Data>): Node<Data>[] =>
-      this.candidateSet.map(e => node.succeed(factory(node, { id: e.slug })));
 }
 
 const result2 = new Selector2([], {
