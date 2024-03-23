@@ -10,7 +10,7 @@ function assertsIsDefined<T>(value: T | undefined | null): asserts value is T {
   }
 }
 
-class NodeSet<Node extends INode<IData>> {
+class NodeSet<Node extends INode> {
   protected ids = new Set<string>();
 
   public get length() {
@@ -27,7 +27,7 @@ class NodeSet<Node extends INode<IData>> {
   }
 }
 
-class OpenSet<Node extends INode<IData>> extends NodeSet<Node> {
+class OpenSet<Node extends INode> extends NodeSet<Node> {
   private queue = new TinyQueue<Node>([], (a, b) => a.compareF(b));
 
   public get length() {
@@ -48,14 +48,14 @@ class OpenSet<Node extends INode<IData>> extends NodeSet<Node> {
   }
 }
 
-export class AStar<Data extends IData, Node extends INode<Data>> implements IAStar<Data> {
+export class AStar implements IAStar {
   constructor(
-    public successors: ISuccessors<Node>,
+    public successors: ISuccessors<INode>,
   ) { }
 
-  public search(root: Node, goal: IGoal): Data[] | null {
-    const open = new OpenSet<Node>().push(root);
-    const closed = new NodeSet<Node>();
+  public search<Data extends IData>(root: INode, goal: IGoal): Data[] | null {
+    const open = new OpenSet<INode>().push(root);
+    const closed = new NodeSet<INode>();
 
     while (open.length > 0) {
       const node = open.pop();
@@ -65,7 +65,7 @@ export class AStar<Data extends IData, Node extends INode<Data>> implements IASt
       }
       // If the node satisfies the goal, return the whole path
       if (goal.satisfiedBy(node)) {
-        return node.reconstruct();
+        return <Data[]>node.reconstruct();
       }
       // Add unsatisfying node to the closed list
       closed.push(node);

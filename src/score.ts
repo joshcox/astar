@@ -1,4 +1,4 @@
-import { IData, IGoal, IScore, ScoreFactory } from "types";
+import { IData, IGoal, IScore, IScoreConstructor, IScoreFactory } from "types";
 
 const CALCULATOR_METHODS = Symbol('Calculators');
 
@@ -36,14 +36,6 @@ export abstract class Score implements IScore {
     Util: { Binary },
   };
 
-  static factory(
-    this: new (node: IData, goal: IGoal, options: ScoreOptions) => Score,
-    goal: IGoal,
-    options: ScoreOptions
-  ): ScoreFactory<Score> {
-    return data => new this(data, goal, options);
-  }
-
   private subScores: SubScores = {
     cost: {
       discounts: [],
@@ -80,6 +72,18 @@ export abstract class Score implements IScore {
   private calculateHeuristicPenalty(): number {
     const penalties = this.subScores.heuristic.penalties;
     return Math.max(penalties.reduce((acc, p) => acc + p(), 0), 0);
+  }
+}
+
+export class ScoreFactory implements IScoreFactory {
+  constructor(
+    private Score: IScoreConstructor,
+    protected goal: IGoal,
+    protected options: ScoreOptions,
+  ) { }
+
+  createScore(data: IData): IScore {
+    return new this.Score(data, this.goal, this.options);
   }
 }
 

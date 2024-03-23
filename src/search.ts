@@ -1,21 +1,20 @@
 import { AStar } from "astar";
-import { ScoreOptions } from "score";
-import { IData, IGoal, INode, IScore, NodeFactory, NodeWithFactory, ScoreWithFactory } from "types";
+import { NodeFactory } from "node";
+import { ScoreFactory, ScoreOptions } from "score";
+import { IData, IGoal, INode, IScoreConstructor } from "types";
 
 
-export class Search<Data extends IData, Node extends INode<Data>, Goal extends IGoal, Score extends IScore> {
+export class Search {
   constructor(
-    private Node: NodeWithFactory<Node, Score>,
-    private Score: ScoreWithFactory<Score>,
+    private Score: IScoreConstructor,
     private scoreOptions: ScoreOptions,
-    private successors: (factory: NodeFactory<Node>) => (node: Node) => Node[]
+    private successors: (factory: NodeFactory) => (node: INode) => INode[]
   ) { }
 
-  public select(goal: Goal): Data[] | null {
-    const root = this.Node.buildRoot();
-    const scoreFactory = this.Score.factory(goal, this.scoreOptions)
-    const nodeFactory = this.Node.factory(scoreFactory);
+  public select<Data extends IData>(goal: IGoal): Data[] | null {
+    const scoreFactory = new ScoreFactory(this.Score, goal, this.scoreOptions);
+    const nodeFactory = new NodeFactory(scoreFactory);
     const successors = this.successors(nodeFactory);
-    return new AStar<Data, Node>(successors).search(root, goal);
+    return new AStar(successors).search<Data>(nodeFactory.createRoot(), goal);
   }
 }

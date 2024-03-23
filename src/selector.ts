@@ -1,5 +1,5 @@
 import { Search } from "search";
-import { Node, NodeFactory, Score, ScoreOptions, IData, IGoal } from "./index";
+import { Node, NodeFactory, Score, ScoreOptions, IData, IGoal, INode } from "./index";
 
 class Data implements IData {
   id: string;
@@ -30,11 +30,11 @@ class SelectorScore extends Score {
 }
 
 const successors = (candidateSet: { slug: string }[]) =>
-  (factory: NodeFactory<Node<Data>>) =>
-    (node: Node<Data>): Node<Data>[] =>
-      candidateSet.map(e => node.succeed(factory(node, { id: e.slug })))
+  (factory: NodeFactory) =>
+    (node: INode): INode[] =>
+      candidateSet.map(e => node.addChild(factory.createChild(node, { id: e.slug })))
 
-export class Selector2 {
+export class Selector {
   constructor(
     private candidateSet: { slug: string }[],
     private scoreOptions: ScoreOptions
@@ -42,7 +42,6 @@ export class Selector2 {
 
   public select(goal: Goal): Data[] | null {
     return new Search(
-      Node,
       SelectorScore,
       this.scoreOptions,
       successors(this.candidateSet)
@@ -50,7 +49,7 @@ export class Selector2 {
   }
 }
 
-const result2 = new Selector2([], {
+const result2 = new Selector([], {
   discounts: { computerVision: 0.5 },
   penalties: { anyUnilaterals: 0.5 },
 }).select(new Goal());

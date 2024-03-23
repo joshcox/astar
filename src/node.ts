@@ -1,6 +1,6 @@
-import { IData, INode, IScore, NodeFactory, ScoreFactory } from "types";
+import { IData, INode, IScore, IScoreFactory } from "types";
 
-export class Node<Data extends IData> implements INode<Data> {
+export class Node<Data extends IData> implements INode {
   public depth: number;
   public children: Node<Data>[] = [];
 
@@ -12,12 +12,12 @@ export class Node<Data extends IData> implements INode<Data> {
     this.depth = this.parent.depth + 1;
   }
 
-  static factory(
-    this: new (p: Node<IData>, d: IData, s: IScore) => Node<IData>,
-    scoreFactory: ScoreFactory<IScore>
-  ): NodeFactory<Node<IData>> {
-    return (parent, data) => new this(parent, data, scoreFactory(data));
-  }
+  // static factory(
+  //   this: new (p: Node<IData>, d: IData, s: IScore) => Node<IData>,
+  //   scoreFactory: ScoreFactory<IScore>
+  // ): NodeFactory<Node<IData>> {
+  //   return (parent, data) => new this(parent, data, scoreFactory(data));
+  // }
 
   static buildRoot = () => new Root();
 
@@ -51,7 +51,7 @@ export class Node<Data extends IData> implements INode<Data> {
     return this.f() - other.f();
   }
 
-  public succeed(node: Node<Data>): Node<Data> {
+  public addChild(node: Node<Data>): Node<Data> {
     this.children.push(node);
     return node;
   }
@@ -70,6 +70,22 @@ export class Node<Data extends IData> implements INode<Data> {
       data.push(ancestor.data);
     }
     return data.reverse()
+  }
+}
+
+export class NodeFactory {
+  constructor(
+    private scoreFactory: IScoreFactory
+  ) { }
+
+  public createRoot(): INode {
+    return new Root();
+  }
+
+  public createChild(parent: INode, data: IData): INode {
+    const child = new Node(<Node<IData>>parent, data, this.scoreFactory.createScore(data));
+    parent.addChild(child);
+    return child;
   }
 }
 

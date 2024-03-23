@@ -1,5 +1,5 @@
 export interface IGoal {
-  satisfiedBy(node: INode<IData>): boolean;
+  satisfiedBy(node: INode): boolean;
 }
 
 export interface IData {
@@ -11,40 +11,45 @@ export interface IScore {
   heuristic(): number;
 }
 
-type ScoreConstructor<Score extends IScore> = new (node: IData, goal: IGoal, options: any) => Score;
+export type IScoreConstructor = new (node: IData, goal: IGoal, options: any) => IScore;
 
-export type ScoreFactory<Score extends IScore> = (data: IData) => Score;
+export interface IScoreFactory {
+  createScore(data: IData): IScore;
+}
 
-export type ScoreWithFactory<Score extends IScore> = ScoreConstructor<Score> & {
-  factory: (goal: IGoal, options: any) => ScoreFactory<Score>;
-};
+export type IScoreFactoryConstructor =
+  new (goal: IGoal, options: any) => IScoreFactory;
 
-export interface INode<Data extends IData> {
+export interface INode {
   depth: number;
-  data: Data;
-  parent: INode<IData>;
+  data: IData;
+  parent: INode;
   g(): number;
   h(): number;
   f(): number;
   id(): string;
-  compareF(other: INode<Data>): number;
-  reconstruct(): Data[];
-  succeed(node: INode<Data>): INode<Data>;
+  compareF(other: INode): number;
+  reconstruct(): IData[];
+  addChild(node: INode): INode;
 }
 
-export type GetData<Node extends INode<IData>> = Node extends INode<infer Data> ? Data : never;
+export type INodeConstructor =
+  new (parent: INode, data: IData, score: IScore) => INode;
 
-export type NodeFactory<Node extends INode<IData>> = (parent: Node, data: GetData<Node>) => Node;
+export interface INodeFactory {
+  scoreFactory: IScoreFactory;
+  createRoot(): INode;
+  createNode(parent: INode, data: IData): INode;
+}
 
-export type NodeWithFactory<Node extends INode<IData>, Score extends IScore> = (new (p: Node, d: IData, s: Score) => Node) & {
-  factory: (scoreFactory: ScoreFactory<Score>) => NodeFactory<Node>;
-  buildRoot: () => Node;
-};
+export type INodeFactoryConstructor =
+  new (scoreFactory: IScoreFactory) => INodeFactory;
 
-export interface ISuccessors<Node extends INode<IData>> {
+
+export interface ISuccessors<Node extends INode> {
   (node: Node): Iterable<Node>;
 }
 
-export interface IAStar<Data extends IData> {
-  search(root: INode<Data>, goal: IGoal): Data[] | null;
+export interface IAStar {
+  search(root: INode, goal: IGoal): IData[] | null;
 }
