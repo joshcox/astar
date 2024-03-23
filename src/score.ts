@@ -1,5 +1,41 @@
-import { Binary, CALCULATOR_METHODS, Discount, Penalty } from "score.decorators";
 import { IData, IGoal, IScore, ScoreFactory } from "types";
+
+const CALCULATOR_METHODS = Symbol('Calculators');
+
+const SubScore =
+  (type: 'discount' | 'penalty') =>
+    (): MethodDecorator =>
+      (target: any, key: string | symbol, descriptor: PropertyDescriptor): void => {
+        const weightName = typeof key === 'string'
+          ? key
+          : key.description;
+
+        const originalMethod = descriptor.value;
+        descriptor.value = function (this: Score, ...args: any[]): number {
+          const weights = type === 'discount'
+            ? this.options.discounts
+            : this.options.penalties;
+          return originalMethod.apply(this, args) * (weights[weightName] ?? 0);
+        };
+
+        Reflect.defineMetadata(
+          CALCULATOR_METHODS,
+          [
+            ...(Reflect.getMetadata(CALCULATOR_METHODS, target) || []),
+            { type, key: weightName, method: descriptor.value },
+          ],
+          target,
+        );
+      };
+
+const Binary = () =>
+  (_: any, __: string | symbol, descriptor: PropertyDescriptor): void => {
+    const originalMethod = descriptor.value;
+
+    descriptor.value = function (this: Score, ...args: any[]): number {
+      return originalMethod.apply(this, args) ? 1 : 0;
+    };
+  };
 
 export interface ScoreOptions {
   discounts: Record<string, number>;
@@ -17,15 +53,8 @@ interface SubScores {
 }
 
 export abstract class Score implements IScore {
-  static Binary = Binary;
-
-  static Cost = {
-    Discount,
-  };
-
-  static Heuristic = {
-    Penalty
-  };
+  abstract baseCost(): number;
+  abstract baseHeuristic(): number;
 
   constructor(
     protected readonly data: IData,
@@ -36,14 +65,17 @@ export abstract class Score implements IScore {
       .forEach(this.registerSubscore);
   }
 
-  abstract baseCost(): number;
-  abstract baseHeuristic(): number;
+  static Sub = {
+    Cost: { Discount: SubScore('discount') },
+    Heuristic: { Penalty: SubScore('penalty') },
+    Util: { Binary },
+  };
 
   static factory(
-    this: new (node: IData, goal: IGoal, options: ScoreOptions) => IScore,
+    this: new (node: IData, goal: IGoal, options: ScoreOptions) => Score,
     goal: IGoal,
     options: ScoreOptions
-  ): ReturnType<ScoreFactory<IGoal>> {
+  ): ScoreFactory<Score> {
     return node => new this(node, goal, options);
   }
 

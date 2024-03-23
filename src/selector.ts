@@ -1,8 +1,8 @@
-import { IData, IGoal, INode } from "types";
-import { AStar, Node, NodeFactory, Score, ScoreOptions } from "./index";
+import { Search } from "search";
+import { AStar, Node, NodeFactory, Score, ScoreOptions, IData, IGoal } from "./index";
 
 class Goal implements IGoal {
-  satisfiedBy(node: INode<IData>): boolean {
+  satisfiedBy(node: Node<Data>): boolean {
     return !!node;
   }
   size: number;
@@ -12,44 +12,41 @@ class SelectorScore extends Score {
   public baseCost = () => 1;
   public baseHeuristic = () => ((<{ size: number }><unknown>this.goal).size ?? 0) - this.data.id.length;
 
-  @Score.Cost.Discount()
-  @Score.Binary()
+  @Score.Sub.Cost.Discount()
+  @Score.Sub.Util.Binary()
   public computerVision(): boolean {
     return true;
   }
 
-  @Score.Heuristic.Penalty()
-  @Score.Binary()
+  @Score.Sub.Heuristic.Penalty()
+  @Score.Sub.Util.Binary()
   public anyUnilaterals(): boolean {
     return false;
   }
 }
 
-class NodeData implements IData {
+class Data implements IData {
   id: string;
 }
 
-export class Selector {
+export class Selector2 extends Search<Data, Node<Data>, Goal, Score> {
   constructor(
     private candidateSet: { slug: string }[],
-    private scoreOptions: ScoreOptions
-  ) { }
-
-  private successors = (factory: NodeFactory<NodeData, Node<NodeData>>) =>
-    (node: Node<NodeData>): Node<NodeData>[] =>
-      this.candidateSet.map(e => node.succeed(factory(node, { id: e.slug })))
-
-  public select(goal: Goal): NodeData[] | null {
-    const root = Node.buildRoot();
-    const scoreFactory = SelectorScore.factory(goal, this.scoreOptions)
-    const nodeFactory = Node.factory(scoreFactory);
-    const successors = this.successors(nodeFactory);
-    return new AStar(successors).search(root, goal);
+    scoreOptions: ScoreOptions
+  ) {
+    super(scoreOptions);
   }
+
+  Score = SelectorScore;
+  Node = Node;
+
+  successors = (factory: NodeFactory<Node<Data>>) =>
+    (node: Node<Data>): Node<Data>[] =>
+      this.candidateSet.map(e => node.succeed(factory(node, { id: e.slug })));
 }
 
-const result = new Selector([], {
+const result2 = new Selector2([], {
   discounts: { computerVision: 0.5 },
   penalties: { anyUnilaterals: 0.5 },
 }).select(new Goal());
-console.log(result);
+console.log(result2);

@@ -1,4 +1,4 @@
-import { IData, IGoal, INode, IScore, NodeFactory, NodeScoreFactory2 } from "types";
+import { IData, INode, IScore, NodeFactory, ScoreFactory } from "types";
 
 export class Node<Data extends IData> implements INode<Data> {
   public depth: number;
@@ -14,8 +14,8 @@ export class Node<Data extends IData> implements INode<Data> {
 
   static factory(
     this: new (p: Node<IData>, d: IData, s: IScore) => Node<IData>,
-    scoreFactory: NodeScoreFactory2<IGoal>
-  ): NodeFactory<IData, Node<IData>> {
+    scoreFactory: ScoreFactory<IScore>
+  ): NodeFactory<Node<IData>> {
     return (parent, data) => new this(parent, data, scoreFactory(data));
   }
 
@@ -29,17 +29,22 @@ export class Node<Data extends IData> implements INode<Data> {
     return ids.sort().join('.');
   }
 
-  protected g(): number {
-    return this.score.cost();
+  private _g: number | null = null;
+  public g(): number {
+    if (typeof this._g === 'number') return this._g;
+    this._g = this.score.cost();
+    return this._g;
   }
 
-  private _f: number | null = null;
+  private _h: number | null = null;
+  public h(): number {
+    if (typeof this._h === 'number') return this._h;
+    this._h = this.score.heuristic();
+    return this._h;
+  }
+
   public f(): number {
-    if (typeof this._f === 'number') return this._f;
-    let score = this.g();
-    for (const ancestor of this.ancestors()) score += ancestor.g();
-    this._f = score + this.score.heuristic();
-    return this._f;
+    return [...this.ancestors()].reduce((acc, node) => acc + node.g(), 0) + this.h();
   }
 
   public compareF(other: Node<Data>): number {
@@ -72,6 +77,4 @@ export class Root<Data extends IData> extends Node<Data> {
   constructor() {
     super(<Node<Data>>null, <Data>{ id: 'root' }, <IScore>null);
   }
-
-  isRoot: boolean = true;
 }
