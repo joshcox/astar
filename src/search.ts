@@ -3,15 +3,13 @@ import { ScoreOptions } from "score";
 import { IData, IGoal, INode, IScore, NodeFactory, NodeWithFactory, ScoreWithFactory } from "types";
 
 
-export abstract class Search<Data extends IData, Node extends INode<Data>, Goal extends IGoal, Score extends IScore> {
+export class Search<Data extends IData, Node extends INode<Data>, Goal extends IGoal, Score extends IScore> {
   constructor(
-    private scoreOptions: ScoreOptions
+    private Node: NodeWithFactory<Node, Score>,
+    private Score: ScoreWithFactory<Score>,
+    private scoreOptions: ScoreOptions,
+    private successors: (factory: NodeFactory<Node>) => (node: Node) => Node[]
   ) { }
-
-  abstract Score: ScoreWithFactory<Score>;
-  abstract Node: NodeWithFactory<Node, Score>
-
-  abstract successors: (factory: NodeFactory<Node>) => (node: Node) => Node[];
 
   public select(goal: Goal): Data[] | null {
     const root = this.Node.buildRoot();
