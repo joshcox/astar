@@ -4,4 +4,4 @@ export * from './score';
 export * from './astar'
 export * from './types';
 export * from './node.factory';
-export * from './ScoreFactory';
+export * from './score.factory';
