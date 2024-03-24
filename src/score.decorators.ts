@@ -16,16 +16,16 @@ function SubScore(type: SubScoreTypes): MethodDecorator {
 
       switch (type) {
         case 'cost_discount':
-          weights = this.options.discounts;
+          weights = this.options.cost.discounts;
           break;
         case 'cost_penalty':
-          weights = this.options.penalties;
+          weights = this.options.cost.penalties;
           break;
         case 'heuristic_discount':
-          weights = this.options.discounts;
+          weights = this.options.heuristic.discounts;
           break;
         case 'heuristic_penalty':
-          weights = this.options.penalties;
+          weights = this.options.heuristic.penalties;
           break;
         default:
           throw new Error(`Unknown subscore type: ${type}`);
@@ -53,15 +53,14 @@ function Binary(_: any, __: string | symbol, descriptor: PropertyDescriptor): vo
   };
 }
 
-
 export const SubScoreDecorators = {
-  Cost: {
+  Binary,
+  G: {
     Discount: SubScore('cost_discount'),
     Penalty: SubScore('cost_penalty'),
   },
-  Heuristic: {
+  H: {
     Discount: SubScore('heuristic_discount'),
     Penalty: SubScore('heuristic_penalty')
-  },
-  Util: { Binary },
+  }
 };

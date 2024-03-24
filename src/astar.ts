@@ -1,20 +1,19 @@
 import { NodeSet } from "node.set";
 import { NodeFactory } from "node.factory";
-import { IData, IGoal, INode } from "types";
-import { NodeQueue } from "NodeQueue";
+import { IData, IGoal } from "types";
+import { NodeQueue } from "node.queue";
+import { Node } from "node";
 
-export class AStar {
-  constructor(
-    private nodeFactory: NodeFactory,
-  ) { }
+export class AStar<Data extends IData>{
+  constructor(private nodeFactory: NodeFactory<Data>) { }
 
-  public searchFromRoot<Data extends IData>(goal: IGoal): Data[] | null {
-    return this.search<Data>(this.nodeFactory.createRoot(), goal);
+  public searchFromRoot(goal: IGoal): Data[] | null {
+    return this.search(this.nodeFactory.createRoot(), goal);
   }
 
-  public search<Data extends IData>(root: INode, goal: IGoal): Data[] | null {
-    const open = new NodeQueue<INode>().push(root);
-    const closed = new NodeSet<INode>();
+  public search(root: Node<Data>, goal: IGoal): Data[] | null {
+    const open = new NodeQueue<Node<Data>>().push(root);
+    const closed = new NodeSet<Node<Data>>();
 
     while (open.length > 0) {
       const node = open.pop();

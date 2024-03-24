@@ -12,8 +12,14 @@ export interface IScore {
 }
 
 export interface IScoreOptions {
-  discounts: Record<string, number>;
-  penalties: Record<string, number>;
+  cost: {
+    discounts: Record<string, number>;
+    penalties: Record<string, number>;
+  },
+  heuristic: {
+    discounts: Record<string, number>;
+    penalties: Record<string, number>;
+  }
 }
 
 export type IScoreConstructor = new (node: IData, goal: IGoal, options: IScoreOptions) => IScore;
