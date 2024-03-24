@@ -1,4 +1,4 @@
-import { cost, heuristic } from "./score.decorators";
+import { cost, heuristic } from "./score";
 import { IData, INode, IScore } from "./types";
 
 export class Node<Data extends IData> implements INode {

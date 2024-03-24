@@ -1,4 +1,5 @@
-import { Node, Score, IData, IGoal, AStar, IScoreOptions, IScore, Modifier } from "../src/index";
+import { Score } from "score";
+import { Node, IData, IGoal, AStar, IScoreOptions, IScore, Modifier } from "../src/index";
 
 class Data implements IData {
   id: string;
@@ -12,20 +13,20 @@ class Goal implements IGoal {
   size: number;
 }
 
-@Score<Data, Goal, SelectorScore>()
+@Score
 class SelectorScore implements IScore {
   constructor(private data: Data, private goal: Goal, public options: IScoreOptions) { }
 
   public cost = () => 1;
   public heuristic = () => (this.goal.size ?? 0) - this.data.id.length;
 
-  @Modifier.G.Discount
+  @Modifier.Cost.Discount
   @Modifier.Binary
   public squat(): boolean {
     return this.data.exercise.slug === 'squat';
   }
 
-  @Modifier.H.Penalty
+  @Modifier.Heuristic.Penalty
   @Modifier.Binary
   public anyUnilaterals(): boolean {
     return false;

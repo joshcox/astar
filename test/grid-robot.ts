@@ -1,4 +1,5 @@
-import { Modifier, Score } from "../src/score.decorators";
+import { Modifier } from "../src/score.modifier";
+import { Score } from "../src/score";
 import { AStar, Node, IData, IGoal, IScoreOptions, IScore } from "../src";
 
 export class Point implements IData {
@@ -32,7 +33,7 @@ export class Goal extends Point implements IGoal {
   }
 }
 
-@Score<Point, Goal, ManhattanScore>()
+@Score
 class ManhattanScore implements IScore {
   constructor(private data: Point, private goal: Goal, public options: IScoreOptions) { }
 
@@ -40,7 +41,7 @@ class ManhattanScore implements IScore {
 
   public heuristic = () => this.goal.distance(this.data);
 
-  @Modifier.G.Discount
+  @Modifier.Cost.Discount
   @Modifier.Binary
   public isEven(): boolean {
     return this.data.x % 2 === 0;
