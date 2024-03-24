@@ -1,6 +1,6 @@
 import { NodeSet } from "node.set";
 import { NodeFactory } from "node.factory";
-import { IData, IGoal } from "types";
+import { IData, IGoal, IScoreConstructor, IScoreOptions } from "types";
 import { NodeQueue } from "node.queue";
 import { Node } from "node";
 
@@ -8,11 +8,16 @@ export class AStar<Data extends IData>{
   constructor(private nodeFactory: NodeFactory<Data>) { }
 
   public searchFromRoot(goal: IGoal): Data[] | null {
-    return this.search(this.nodeFactory.createRoot(), goal);
+    return this._search(this.nodeFactory.createRoot(), goal);
   }
 
-  public search(root: Node<Data>, goal: IGoal): Data[] | null {
-    const open = new NodeQueue<Node<Data>>().push(root);
+  public search(start: Data, goal: IGoal): Data[] | null {
+    const root = this.nodeFactory.createRoot();
+    return this._search(this.nodeFactory.createChild(root, goal, start), goal);
+  }
+
+  private _search(start: Node<Data>, goal: IGoal) {
+    const open = new NodeQueue<Node<Data>>().push(start);
     const closed = new NodeSet<Node<Data>>();
 
     while (open.length > 0) {
