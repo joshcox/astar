@@ -5,7 +5,7 @@ import { Root, Node } from "node";
 export class NodeFactory implements INodeFactory {
   constructor(
     public scoreFactory: IScoreFactory,
-    private buildSuccessorData: (node: INode) => IData[]
+    private successorDataFactory: (node: INode) => IData[]
   ) { }
 
   public createRoot(): INode {
@@ -19,6 +19,6 @@ export class NodeFactory implements INodeFactory {
   }
 
   public successors(goal: IGoal, node: INode): INode[] {
-    return this.buildSuccessorData(node).map(data => node.addChild(this.createChild(node, goal, data)));
+    return this.successorDataFactory(node).map(data => node.addChild(this.createChild(node, goal, data)));
   }
 }

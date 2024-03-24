@@ -2,7 +2,7 @@ import { Node, NodeFactory, Score, IData, IGoal, INode, AStar, ScoreFactory, ISc
 
 class Data implements IData {
   id: string;
-  exercise: { uuid: string };
+  exercise: { slug: string };
 }
 
 class Goal implements IGoal {
@@ -22,7 +22,7 @@ class SelectorScore extends Score {
   @Score.Sub.Cost.Discount
   @Score.Sub.Util.Binary
   public computerVision(): boolean {
-    return this.data.exercise.uuid === 'computer-vision';
+    return this.data.exercise.slug === 'squat';
   }
 
   @Score.Sub.Heuristic.Penalty
@@ -38,13 +38,14 @@ export class Selector {
     private scoreOptions: IScoreOptions
   ) { }
 
-  private successors = (_node: INode) => this.candidateSet.map(e => ({ id: e.slug }));
+  private successorDataFactory = (_node: INode): IData[] =>
+    this.candidateSet.map(exercise => ({ id: exercise.slug, exercise }));
 
   public select(goal: Goal): Data[] | null {
     return new AStar(
       new NodeFactory(
         new ScoreFactory(SelectorScore, this.scoreOptions),
-        this.successors
+        this.successorDataFactory
       )
     ).searchFromRoot(goal);
   }
