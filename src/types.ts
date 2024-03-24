@@ -13,12 +13,12 @@ export interface IScore {
 
 export interface IScoreOptions {
   cost: {
-    discounts: Record<string, number>;
-    penalties: Record<string, number>;
+    discount: Record<string, number>;
+    penalty: Record<string, number>;
   },
   heuristic: {
-    discounts: Record<string, number>;
-    penalties: Record<string, number>;
+    discount: Record<string, number>;
+    penalty: Record<string, number>;
   }
 }
 

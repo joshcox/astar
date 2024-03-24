@@ -1,104 +1,67 @@
+import { assertsIsNumber } from "assertions";
 import { Score } from "score";
 
-export const CALCULATOR_METHODS = Symbol('Calculators');
+const SUBSCORES = Symbol('SubScores');
 
-export type SubScoreTypes = 'cost_discount' | 'cost_penalty' | 'heuristic_discount' | 'heuristic_penalty';
+export const getSubScores = (target: any): Metadata[] => (Reflect.getMetadata(SUBSCORES, target) || []);
 
-export type SubScoreMetadata = { type: SubScoreTypes, key: string, method: () => number };
+export const registerSubScore = (target: any, metadata: Metadata): void => {
+  Reflect.defineMetadata(SUBSCORES, getSubScores(target).concat([metadata]), target);
+};
 
-function SubScore(type: SubScoreTypes): MethodDecorator {
+type Type = 'cost' | 'heuristic';
+
+type Modifier = 'discount' | 'penalty';
+
+type Classification = `${Type}:${Modifier}`;
+
+type ParsedClassification = { type: Type, modifier: Modifier };
+
+const parseClassification = (classification: Classification): ParsedClassification => {
+  const [type, modifier] = classification.split(':') as [Type, Modifier];
+  return { type, modifier };
+};
+
+type Metadata = { classification: ParsedClassification, key: string, method: () => number };
+
+function SubScore(classification: Classification): MethodDecorator {
   return (target: any, key: string | symbol, descriptor: PropertyDescriptor): void => {
     const weightName = typeof key === 'string'
       ? key
       : key.description;
 
-    const originalMethod = descriptor.value;
+    const sooper = descriptor.value;
     descriptor.value = function (this: Score, ...args: any[]): number {
-      let weights: Record<string, number>;
-
-      switch (type) {
-        case 'cost_discount':
-          weights = this.options.cost.discounts;
-          break;
-        case 'cost_penalty':
-          weights = this.options.cost.penalties;
-          break;
-        case 'heuristic_discount':
-          weights = this.options.heuristic.discounts;
-          break;
-        case 'heuristic_penalty':
-          weights = this.options.heuristic.penalties;
-          break;
-        default:
-          throw new Error(`Unknown subscore type: ${type}`);
-      }
-
-      return originalMethod.apply(this, args) * (weights[weightName] ?? 0);
+      const result = sooper.apply(this, args);
+      assertsIsNumber(result);
+      const { type, modifier } = parseClassification(classification);
+      const weight = this.options[type][modifier][weightName] ?? 0
+      return result * weight;
     };
 
-    Reflect.defineMetadata(CALCULATOR_METHODS, [
-      ...(Reflect.getMetadata(CALCULATOR_METHODS, target) || []),
-      {
-        type,
-        key: weightName,
-        method: descriptor.value,
-      } satisfies SubScoreMetadata,
-    ], target);
+    registerSubScore(target, {
+      classification: parseClassification(classification),
+      key: weightName,
+      method: descriptor.value,
+    });
   };
 }
 
 function Binary(_: any, __: string | symbol, descriptor: PropertyDescriptor): void {
-  const originalMethod = descriptor.value;
-
+  const sooper = descriptor.value;
   descriptor.value = function (this: Score, ...args: any[]): number {
-    return originalMethod.apply(this, args) ? 1 : 0;
+    return sooper.apply(this, args) ? 1 : 0;
   };
 }
 
-export const SubScoreDecorators = {
+export const Decorators = {
   Binary,
   G: {
-    Discount: SubScore('cost_discount'),
-    Penalty: SubScore('cost_penalty'),
+    Discount: SubScore('cost:discount'),
+    Penalty: SubScore('cost:penalty'),
   },
   H: {
-    Discount: SubScore('heuristic_discount'),
-    Penalty: SubScore('heuristic_penalty')
+    Discount: SubScore('heuristic:discount'),
+    Penalty: SubScore('heuristic:penalty')
   }
 };
-
-export type SubScores = {
-  cost: {
-    discounts: Array<() => number>,
-    penalties: Array<() => number>,
-  },
-  heuristic: {
-    penalties: Array<() => number>,
-    discounts: Array<() => number>,
-  },
-};
-
-export const initializeSubScores = (): SubScores => ({
-  cost: { discounts: [], penalties: [] },
-  heuristic: { penalties: [], discounts: [] },
-});
-
-export const registerSubScores = (score: Score) => {
-  (Reflect.getMetadata(CALCULATOR_METHODS, Score.prototype) || [])
-      .forEach(({ type, method }: { type: SubScoreTypes, method: () => number }): number => {
-        const boundMethod = method.bind(this);
-        switch (type) {
-          case 'cost_discount':
-            return score.subScores.cost.discounts.push(boundMethod);
-          case 'cost_penalty':
-            return score.subScores.cost.penalties.push(boundMethod);
-          case 'heuristic_discount':
-            return score.subScores.heuristic.discounts.push(boundMethod);
-          case 'heuristic_penalty':
-            return score.subScores.heuristic.penalties.push(boundMethod);
-          default: {
-            throw new Error(`Unknown SubScore type: ${type}`);
-          }
-        }
-      });
-}

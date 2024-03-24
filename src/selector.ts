@@ -1,4 +1,4 @@
-import { Node, NodeFactory, Score, IData, IGoal, AStar, ScoreFactory, IScoreOptions } from "./index";
+import { Node, NodeFactory, Score, IData, IGoal, AStar, ScoreFactory, IScoreOptions, SubScore } from "./index";
 
 class Data implements IData {
   id: string;
@@ -19,14 +19,14 @@ class SelectorScore extends Score {
   public baseCost = () => 1;
   public baseHeuristic = () => (this.goal.size ?? 0) - this.data.id.length;
 
-  @Score.Sub.G.Discount
-  @Score.Sub.Binary
+  @SubScore.G.Discount
+  @SubScore.Binary
   public squat(): boolean {
     return this.data.exercise.slug === 'squat';
   }
 
-  @Score.Sub.H.Penalty
-  @Score.Sub.Binary
+  @SubScore.H.Penalty
+  @SubScore.Binary
   public anyUnilaterals(): boolean {
     return false;
   }
@@ -53,12 +53,12 @@ export class Selector {
 
 const result2 = new Selector([], {
   cost: {
-    discounts: { squat: 0.5 },
-    penalties: {},
+    discount: { squat: 0.5 },
+    penalty: {},
   },
   heuristic: {
-    discounts: {},
-    penalties: {
+    discount: {},
+    penalty: {
       anyUnilaterals: 0.5
     },
   },

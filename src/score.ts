@@ -1,8 +1,21 @@
-import { SubScoreDecorators, SubScores, initializeSubScores, registerSubScores } from "score.decorators";
+import { Decorators, getSubScores } from "score.decorators";
 import { IData, IGoal, IScore, IScoreOptions } from "types";
+
+type Stash = {
+  cost: {
+    discount: Array<() => number>,
+    penalty: Array<() => number>,
+  },
+  heuristic: {
+    discount: Array<() => number>,
+    penalty: Array<() => number>,
+  },
+};
 
 const sum = (nums: number[]): number =>
   Math.max(nums.reduce((acc, n) => acc + n, 0), 0);
+
+export const SubScore = Decorators;
 
 export abstract class Score implements IScore {
   abstract baseCost(): number;
@@ -13,12 +26,17 @@ export abstract class Score implements IScore {
     protected readonly goal: IGoal,
     public options: IScoreOptions,
   ) {
-    registerSubScores(this);
+    getSubScores(this.constructor.prototype)
+      .forEach(({ classification, method }) => {
+        const { type, modifier } = classification;
+        this.stash[type][modifier].push(method);
+      });
   }
 
-  static Sub = SubScoreDecorators;
-
-  public subScores: SubScores = initializeSubScores();
+  private stash: Stash = {
+    cost: { discount: [], penalty: [] },
+    heuristic: { penalty: [], discount: [] },
+  };
 
   public cost(): number {
     return this.baseCost()
@@ -27,11 +45,11 @@ export abstract class Score implements IScore {
   }
 
   private calculateCostDiscount(): number {
-    return sum(this.subScores.cost.discounts.map(d => d()));
+    return sum(this.stash.cost.discount.map(d => d()));
   }
 
   private calculateCostPenalty(): number {
-    return sum(this.subScores.cost.penalties.map(p => p()));
+    return sum(this.stash.cost.penalty.map(p => p()));
   }
 
   public heuristic(): number {
@@ -41,10 +59,10 @@ export abstract class Score implements IScore {
   }
 
   private calculateHeuristicDiscount(): number {
-    return sum(this.subScores.heuristic.discounts.map(d => d()));
+    return sum(this.stash.heuristic.discount.map(d => d()));
   }
 
   private calculateHeuristicPenalty(): number {
-    return sum(this.subScores.heuristic.penalties.map(p => p()));
+    return sum(this.stash.heuristic.penalty.map(p => p()));
   }
 }

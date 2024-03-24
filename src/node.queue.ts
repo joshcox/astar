@@ -1,5 +1,5 @@
 import { NodeSet } from "node.set";
-import { assertsIsDefined } from "assertsIsDefined";
+import { assertsIsDefined } from "assertions";
 import TinyQueue from "tinyqueue";
 import { INode } from "types";
 
