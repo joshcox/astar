@@ -1,4 +1,4 @@
-import { IData, INode, IScore, IScoreFactory } from "types";
+import { IData, IGoal, INode, INodeFactory, IScore, IScoreFactory } from "types";
 
 export class Node<Data extends IData> implements INode {
   public depth: number;
@@ -73,19 +73,24 @@ export class Node<Data extends IData> implements INode {
   }
 }
 
-export class NodeFactory {
+export class NodeFactory implements INodeFactory {
   constructor(
-    private scoreFactory: IScoreFactory
+    public scoreFactory: IScoreFactory,
+    private successorData: (node: INode) => IData[]
   ) { }
 
   public createRoot(): INode {
     return new Root();
   }
 
-  public createChild(parent: INode, data: IData): INode {
-    const child = new Node(<Node<IData>>parent, data, this.scoreFactory.createScore(data));
+  public createChild(parent: INode, goal: IGoal, data: IData): INode {
+    const child = new Node(<Node<IData>>parent, data, this.scoreFactory.createScore(goal, data));
     parent.addChild(child);
     return child;
+  }
+
+  public successors(goal: IGoal, node: INode): INode[] {
+    return this.successorData(node).map(data => node.addChild(this.createChild(node, goal, data)));
   }
 }
 

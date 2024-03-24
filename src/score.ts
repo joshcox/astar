@@ -78,12 +78,11 @@ export abstract class Score implements IScore {
 export class ScoreFactory implements IScoreFactory {
   constructor(
     private Score: IScoreConstructor,
-    protected goal: IGoal,
     protected options: ScoreOptions,
   ) { }
 
-  createScore(data: IData): IScore {
-    return new this.Score(data, this.goal, this.options);
+  createScore(goal: IGoal, data: IData): IScore {
+    return new this.Score(data, goal, this.options);
   }
 }
 

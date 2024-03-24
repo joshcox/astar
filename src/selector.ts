@@ -1,5 +1,4 @@
-import { Search } from "search";
-import { Node, NodeFactory, Score, ScoreOptions, IData, IGoal, INode } from "./index";
+import { Node, NodeFactory, Score, ScoreOptions, IData, IGoal, INode, AStar, ScoreFactory } from "./index";
 
 class Data implements IData {
   id: string;
@@ -29,23 +28,21 @@ class SelectorScore extends Score {
   }
 }
 
-const successors = (candidateSet: { slug: string }[]) =>
-  (factory: NodeFactory) =>
-    (node: INode): INode[] =>
-      candidateSet.map(e => node.addChild(factory.createChild(node, { id: e.slug })))
-
 export class Selector {
   constructor(
     private candidateSet: { slug: string }[],
     private scoreOptions: ScoreOptions
   ) { }
 
+  private successors = (_node: INode) => this.candidateSet.map(e => ({ id: e.slug }));
+
   public select(goal: Goal): Data[] | null {
-    return new Search(
-      SelectorScore,
-      this.scoreOptions,
-      successors(this.candidateSet)
-    ).select(goal);
+    return new AStar(
+      new NodeFactory(
+        new ScoreFactory(SelectorScore, this.scoreOptions),
+        this.successors
+      )
+    ).searchFromRoot(goal);
   }
 }
 

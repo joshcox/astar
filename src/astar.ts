@@ -1,5 +1,6 @@
+import { NodeFactory } from "node";
 import TinyQueue from "tinyqueue";
-import { IAStar, IData, IGoal, INode, ISuccessors } from "types";
+import { IData, IGoal, INode } from "types";
 
 const isDefined = <T>(value: T | undefined | null): value is T =>
   value !== undefined && value !== null;
@@ -48,10 +49,14 @@ class OpenSet<Node extends INode> extends NodeSet<Node> {
   }
 }
 
-export class AStar implements IAStar {
+export class AStar {
   constructor(
-    public successors: ISuccessors<INode>,
+    private nodeFactory: NodeFactory,
   ) { }
+
+  public searchFromRoot<Data extends IData>(goal: IGoal): Data[] | null {
+    return this.search<Data>(this.nodeFactory.createRoot(), goal);
+  }
 
   public search<Data extends IData>(root: INode, goal: IGoal): Data[] | null {
     const open = new OpenSet<INode>().push(root);
@@ -69,7 +74,7 @@ export class AStar implements IAStar {
       }
       // Add unsatisfying node to the closed list
       closed.push(node);
-      for (const successor of this.successors(node)) {
+      for (const successor of this.nodeFactory.successors(goal, node)) {
         // If the successor is already queued, skip it
         if (open.has(successor)) {
           continue;

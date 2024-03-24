@@ -14,11 +14,11 @@ export interface IScore {
 export type IScoreConstructor = new (node: IData, goal: IGoal, options: any) => IScore;
 
 export interface IScoreFactory {
-  createScore(data: IData): IScore;
+  createScore(goal: IGoal, data: IData): IScore;
 }
 
 export type IScoreFactoryConstructor =
-  new (goal: IGoal, options: any) => IScoreFactory;
+  new (options: any) => IScoreFactory;
 
 export interface INode {
   depth: number;
@@ -39,7 +39,7 @@ export type INodeConstructor =
 export interface INodeFactory {
   scoreFactory: IScoreFactory;
   createRoot(): INode;
-  createNode(parent: INode, data: IData): INode;
+  createChild(parent: INode, goal: IGoal, data: IData): INode;
 }
 
 export type INodeFactoryConstructor =
@@ -48,8 +48,4 @@ export type INodeFactoryConstructor =
 
 export interface ISuccessors<Node extends INode> {
   (node: Node): Iterable<Node>;
-}
-
-export interface IAStar {
-  search(root: INode, goal: IGoal): IData[] | null;
 }
