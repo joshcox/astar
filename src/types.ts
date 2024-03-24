@@ -22,7 +22,7 @@ export interface IScoreOptions {
   }
 }
 
-export type IScoreConstructor = new (node: IData, goal: IGoal, options: IScoreOptions) => IScore;
+export type IScoreConstructor<Data extends IData, Goal extends IGoal, Score extends IScore> = new (data: Data, goal: Goal, options: IScoreOptions) => Score;
 
 export interface IScoreFactory {
   createScore(goal: IGoal, data: IData): IScore;

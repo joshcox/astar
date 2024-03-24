@@ -1,25 +1,25 @@
 import { NodeSet } from "./node.set";
 import { NodeFactory } from "./node.factory";
-import { IData, IGoal, IScoreConstructor, IScoreOptions } from "./types";
+import { IData, IGoal, IScore, IScoreConstructor, IScoreOptions } from "./types";
 import { NodeQueue } from "./node.queue";
 import { Node } from "./node";
 import { ScoreFactory } from "./score.factory";
 
-interface AStarOptions<Data extends IData> {
+interface AStarOptions<Data extends IData, Goal extends IGoal> {
   score: {
-    constructor: IScoreConstructor;
+    constructor: IScoreConstructor<Data, Goal, IScore>;
     options: IScoreOptions;
   },
-  successorDataFactory: (node: Node<Data>) => Data[];
+  successors: (node: Node<Data>) => Data[];
 }
 
-export class AStar<Data extends IData>{
+export class AStar<Data extends IData, Goal extends IGoal>{
   private nodeFactory: NodeFactory<Data>;
 
-  constructor(options: AStarOptions<Data>) {
+  constructor(options: AStarOptions<Data, Goal>) {
     this.nodeFactory = new NodeFactory(
       new ScoreFactory(options.score.constructor, options.score.options),
-      options.successorDataFactory
+      options.successors
     );
   }
 

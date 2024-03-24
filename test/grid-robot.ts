@@ -1,4 +1,5 @@
-import { AStar, Node, Score, IData, IGoal, IScoreOptions } from "../src";
+import { Modifier, Score } from "../src/score.decorators";
+import { AStar, Node, IData, IGoal, IScoreOptions, IScore } from "../src";
 
 export class Point implements IData {
   constructor(public x: number, public y: number) { }
@@ -7,8 +8,12 @@ export class Point implements IData {
     return `${this.x},${this.y}`;
   }
 
-  equals(other: Point): boolean {
+  public equals(other: Point): boolean {
     return this.x === other.x && this.y === other.y;
+  }
+
+  public distance(other: Point): number {
+    return Math.abs(this.x - other.x) + Math.abs(this.y - other.y);
   }
 
   static adjacent(point: Point): Point[] {
@@ -27,22 +32,29 @@ export class Goal extends Point implements IGoal {
   }
 }
 
-class ManhattanScore extends Score {
-  declare goal: Goal;
-  declare data: Point;
+@Score<Point, Goal, ManhattanScore>()
+class ManhattanScore implements IScore {
+  constructor(private data: Point, private goal: Goal, public options: IScoreOptions) { }
 
-  public baseCost = () => 1;
-  public baseHeuristic = () => Math.abs(this.goal.x - this.data.x) + Math.abs(this.goal.y - this.data.y);
+  public cost = () => 1;
+
+  public heuristic = () => this.goal.distance(this.data);
+
+  @Modifier.G.Discount
+  @Modifier.Binary
+  public isEven(): boolean {
+    return this.data.x % 2 === 0;
+  };
 }
 
 export class GridRobot {
   go(start: Point, goal: Goal): Point[] | null {
-    return new AStar<Point>({
+    return new AStar<Point, Goal>({
       score: {
         constructor: ManhattanScore,
-        options: <IScoreOptions>{},
+        options: <IScoreOptions>{}
       },
-      successorDataFactory: node => Point.adjacent(node.data),
+      successors: node => Point.adjacent(node.data),
     }).search(start, goal);
   }
 }

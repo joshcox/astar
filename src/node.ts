@@ -1,3 +1,4 @@
+import { cost, heuristic } from "./score.decorators";
 import { IData, INode, IScore } from "./types";
 
 export class Node<Data extends IData> implements INode {
@@ -19,14 +20,14 @@ export class Node<Data extends IData> implements INode {
   private _g: number | null = null;
   public g(): number {
     if (typeof this._g === 'number') return this._g;
-    this._g = this.score.cost();
+    this._g = cost(this.score);
     return this._g;
   }
 
   private _h: number | null = null;
   public h(): number {
     if (typeof this._h === 'number') return this._h;
-    this._h = this.score.heuristic();
+    this._h = heuristic(this.score);
     return this._h;
   }
 
