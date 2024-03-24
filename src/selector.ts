@@ -2,6 +2,7 @@ import { Node, NodeFactory, Score, IData, IGoal, INode, AStar, ScoreFactory, ISc
 
 class Data implements IData {
   id: string;
+  exercise: { uuid: string };
 }
 
 class Goal implements IGoal {
@@ -12,13 +13,16 @@ class Goal implements IGoal {
 }
 
 class SelectorScore extends Score {
+  declare goal: Goal;
+  declare data: Data;
+
   public baseCost = () => 1;
-  public baseHeuristic = () => ((<{ size: number }><unknown>this.goal).size ?? 0) - this.data.id.length;
+  public baseHeuristic = () => (this.goal.size ?? 0) - this.data.id.length;
 
   @Score.Sub.Cost.Discount
   @Score.Sub.Util.Binary
   public computerVision(): boolean {
-    return true;
+    return this.data.exercise.uuid === 'computer-vision';
   }
 
   @Score.Sub.Heuristic.Penalty
