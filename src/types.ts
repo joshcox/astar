@@ -11,7 +11,12 @@ export interface IScore {
   heuristic(): number;
 }
 
-export type IScoreConstructor = new (node: IData, goal: IGoal, options: any) => IScore;
+export interface IScoreOptions {
+  discounts: Record<string, number>;
+  penalties: Record<string, number>;
+}
+
+export type IScoreConstructor = new (node: IData, goal: IGoal, options: IScoreOptions) => IScore;
 
 export interface IScoreFactory {
   createScore(goal: IGoal, data: IData): IScore;

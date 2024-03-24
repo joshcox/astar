@@ -1,4 +1,4 @@
-import { Node, NodeFactory, Score, ScoreOptions, IData, IGoal, INode, AStar, ScoreFactory } from "./index";
+import { Node, NodeFactory, Score, IData, IGoal, INode, AStar, ScoreFactory, IScoreOptions } from "./index";
 
 class Data implements IData {
   id: string;
@@ -31,7 +31,7 @@ class SelectorScore extends Score {
 export class Selector {
   constructor(
     private candidateSet: { slug: string }[],
-    private scoreOptions: ScoreOptions
+    private scoreOptions: IScoreOptions
   ) { }
 
   private successors = (_node: INode) => this.candidateSet.map(e => ({ id: e.slug }));

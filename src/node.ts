@@ -1,4 +1,4 @@
-import { IData, IGoal, INode, INodeFactory, IScore, IScoreFactory } from "types";
+import { IData, INode, IScore } from "types";
 
 export class Node<Data extends IData> implements INode {
   public depth: number;
@@ -11,15 +11,6 @@ export class Node<Data extends IData> implements INode {
   ) {
     this.depth = this.parent.depth + 1;
   }
-
-  // static factory(
-  //   this: new (p: Node<IData>, d: IData, s: IScore) => Node<IData>,
-  //   scoreFactory: ScoreFactory<IScore>
-  // ): NodeFactory<Node<IData>> {
-  //   return (parent, data) => new this(parent, data, scoreFactory(data));
-  // }
-
-  static buildRoot = () => new Root();
 
   public id(): string {
     let ids = [this.data.id];
@@ -70,27 +61,6 @@ export class Node<Data extends IData> implements INode {
       data.push(ancestor.data);
     }
     return data.reverse()
-  }
-}
-
-export class NodeFactory implements INodeFactory {
-  constructor(
-    public scoreFactory: IScoreFactory,
-    private successorData: (node: INode) => IData[]
-  ) { }
-
-  public createRoot(): INode {
-    return new Root();
-  }
-
-  public createChild(parent: INode, goal: IGoal, data: IData): INode {
-    const child = new Node(<Node<IData>>parent, data, this.scoreFactory.createScore(goal, data));
-    parent.addChild(child);
-    return child;
-  }
-
-  public successors(goal: IGoal, node: INode): INode[] {
-    return this.successorData(node).map(data => node.addChild(this.createChild(node, goal, data)));
   }
 }
 

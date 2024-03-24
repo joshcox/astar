@@ -1,21 +1,7 @@
-import { IData, IGoal, IScore, IScoreConstructor, IScoreFactory } from "types";
+import { SubScoreDecorators, SubScoreTypes } from "score.decorators";
+import { IData, IGoal, IScore, IScoreOptions } from "types";
 
-const CALCULATOR_METHODS = Symbol('Calculators');
-
-export interface ScoreOptions {
-  discounts: Record<string, number>;
-  penalties: Record<string, number>;
-}
-
-
-interface SubScores {
-  cost: {
-    discounts: Array<() => number>;
-  };
-  heuristic: {
-    penalties: Array<() => number>;
-  };
-}
+export const CALCULATOR_METHODS = Symbol('Calculators');
 
 export abstract class Score implements IScore {
   abstract baseCost(): number;
@@ -24,35 +10,39 @@ export abstract class Score implements IScore {
   constructor(
     protected readonly data: IData,
     protected readonly goal: IGoal,
-    public options: ScoreOptions,
+    public options: IScoreOptions,
   ) {
     (Reflect.getMetadata(CALCULATOR_METHODS, this.constructor.prototype) || [])
       .forEach(this.registerSubscore);
   }
 
-  static Sub = {
-    Cost: { Discount: SubScore('discount') },
-    Heuristic: { Penalty: SubScore('penalty') },
-    Util: { Binary },
-  };
+  static Sub = SubScoreDecorators;
 
-  private subScores: SubScores = {
+  private subScores = {
     cost: {
-      discounts: [],
+      discounts: <Array<() => number>>[],
+      penalties: <Array<() => number>>[],
     },
     heuristic: {
-      penalties: [],
+      penalties: <Array<() => number>>[],
+      discounts: <Array<() => number>>[],
     },
   };
 
-  private registerSubscore = ({ type, method }: any): number => {
+  private registerSubscore = ({ type, method }: { type: SubScoreTypes, method: () => number }): number => {
     const boundMethod = method.bind(this);
     switch (type) {
-      case 'discount':
+      case 'cost_discount':
         return this.subScores.cost.discounts.push(boundMethod);
-      case 'penalty':
+      case 'cost_penalty':
+        return this.subScores.cost.penalties.push(boundMethod);
+      case 'heuristic_discount':
+        return this.subScores.heuristic.discounts.push(boundMethod);
+      case 'heuristic_penalty':
         return this.subScores.heuristic.penalties.push(boundMethod);
-      default: throw new Error(`Unknown calculator type: ${type}`);
+      default: {
+        throw new Error(`Unknown calculator type: ${type}`);
+      }
     }
   };
 
@@ -75,46 +65,4 @@ export abstract class Score implements IScore {
   }
 }
 
-export class ScoreFactory implements IScoreFactory {
-  constructor(
-    private Score: IScoreConstructor,
-    protected options: ScoreOptions,
-  ) { }
 
-  createScore(goal: IGoal, data: IData): IScore {
-    return new this.Score(data, goal, this.options);
-  }
-}
-
-function SubScore(type: 'discount' | 'penalty'): MethodDecorator {
-  return (target: any, key: string | symbol, descriptor: PropertyDescriptor): void => {
-    const weightName = typeof key === 'string'
-      ? key
-      : key.description;
-
-    const originalMethod = descriptor.value;
-    descriptor.value = function (this: Score, ...args: any[]): number {
-      const weights = type === 'discount'
-        ? this.options.discounts
-        : this.options.penalties;
-      return originalMethod.apply(this, args) * (weights[weightName] ?? 0);
-    };
-
-    Reflect.defineMetadata(
-      CALCULATOR_METHODS,
-      [
-        ...(Reflect.getMetadata(CALCULATOR_METHODS, target) || []),
-        { type, key: weightName, method: descriptor.value },
-      ],
-      target,
-    );
-  }
-}
-
-function Binary(_: any, __: string | symbol, descriptor: PropertyDescriptor): void {
-  const originalMethod = descriptor.value;
-
-  descriptor.value = function (this: Score, ...args: any[]): number {
-    return originalMethod.apply(this, args) ? 1 : 0;
-  };
-};
