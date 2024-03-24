@@ -1,10 +1,10 @@
 import { AStar, Node, Score, IData, IGoal, IScoreOptions } from "../src";
 
 export class Point implements IData {
-  public id: string;
+  constructor(public x: number, public y: number) { }
 
-  constructor(public x: number, public y: number) {
-    this.id = `${this.x},${this.y}`
+  get id(): string {
+    return `${this.x},${this.y}`;
   }
 
   equals(other: Point): boolean {
