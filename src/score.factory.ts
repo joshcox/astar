@@ -4,7 +4,7 @@ import { IData, IGoal, IScore, IScoreConstructor, IScoreFactory, IScoreOptions }
 export class ScoreFactory implements IScoreFactory {
   constructor(
     private Score: IScoreConstructor,
-    protected options: IScoreOptions
+    private options: IScoreOptions
   ) { }
 
   createScore(goal: IGoal, data: IData): IScore {

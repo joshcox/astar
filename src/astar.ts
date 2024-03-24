@@ -23,7 +23,7 @@ export class AStar<Data extends IData>{
       }
       // If the node satisfies the goal, return the whole path
       if (goal.satisfiedBy(node)) {
-        return <Data[]>node.reconstruct();
+        return node.reconstruct();
       }
       // Add unsatisfying node to the closed list
       closed.push(node);
