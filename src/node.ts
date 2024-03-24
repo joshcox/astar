@@ -9,15 +9,11 @@ export class Node<Data extends IData> implements INode {
     public data: Data,
     private score: IScore,
   ) {
-    this.depth = (this.parent?.depth ?? 0) + 1;
+    this.depth = this instanceof Root ? 0 : this.parent.depth + 1;
   }
 
   public id(): string {
-    let ids = [this.data.id];
-    for (const ancestor of this.ancestors()) {
-      ids.push(ancestor.data.id);
-    }
-    return ids.join('.');
+    return [...this.ancestors()].map(node => node.data.id).sort().join('.');
   }
 
   private _g: number | null = null;
@@ -49,18 +45,14 @@ export class Node<Data extends IData> implements INode {
 
   private * ancestors(): Iterable<Node<Data>> {
     let node: Node<Data> = this;
-    while (!(node.parent instanceof Root)) {
-      yield node.parent;
+    while (!(node instanceof Root)) {
+      yield node;
       node = node.parent;
     }
   }
 
   public reconstruct(): Data[] {
-    let data = [this.data];
-    for (const ancestor of this.ancestors()) {
-      data.push(ancestor.data);
-    }
-    return data.reverse();
+    return [...this.ancestors()].map(node => node.data).reverse();
   }
 }
 
