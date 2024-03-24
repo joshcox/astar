@@ -1,6 +1,5 @@
 import { IData, IGoal, IScore, IScoreConstructor, IScoreFactory, IScoreOptions } from "types";
 
-
 export class ScoreFactory implements IScoreFactory {
   constructor(
     private Score: IScoreConstructor,

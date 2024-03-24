@@ -1,4 +1,6 @@
-import { Score, CALCULATOR_METHODS } from "score";
+import { Score } from "score";
+
+export const CALCULATOR_METHODS = Symbol('Calculators');
 
 export type SubScoreTypes = 'cost_discount' | 'cost_penalty' | 'heuristic_discount' | 'heuristic_penalty';
 
@@ -64,3 +66,39 @@ export const SubScoreDecorators = {
     Penalty: SubScore('heuristic_penalty')
   }
 };
+
+export type SubScores = {
+  cost: {
+    discounts: Array<() => number>,
+    penalties: Array<() => number>,
+  },
+  heuristic: {
+    penalties: Array<() => number>,
+    discounts: Array<() => number>,
+  },
+};
+
+export const initializeSubScores = (): SubScores => ({
+  cost: { discounts: [], penalties: [] },
+  heuristic: { penalties: [], discounts: [] },
+});
+
+export const registerSubScores = (score: Score) => {
+  (Reflect.getMetadata(CALCULATOR_METHODS, Score.prototype) || [])
+      .forEach(({ type, method }: { type: SubScoreTypes, method: () => number }): number => {
+        const boundMethod = method.bind(this);
+        switch (type) {
+          case 'cost_discount':
+            return score.subScores.cost.discounts.push(boundMethod);
+          case 'cost_penalty':
+            return score.subScores.cost.penalties.push(boundMethod);
+          case 'heuristic_discount':
+            return score.subScores.heuristic.discounts.push(boundMethod);
+          case 'heuristic_penalty':
+            return score.subScores.heuristic.penalties.push(boundMethod);
+          default: {
+            throw new Error(`Unknown SubScore type: ${type}`);
+          }
+        }
+      });
+}

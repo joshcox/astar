@@ -1,7 +1,6 @@
 import { IData, IGoal, INodeFactory, IScoreFactory } from "types";
 import { Root, Node } from "node";
 
-
 export class NodeFactory<Data extends IData> implements INodeFactory {
   constructor(
     public scoreFactory: IScoreFactory,
