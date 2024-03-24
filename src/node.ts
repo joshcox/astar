@@ -1,4 +1,4 @@
-import { IData, INode, IScore } from "types";
+import { IData, INode, IScore } from "./types";
 
 export class Node<Data extends IData> implements INode {
   public depth: number;
@@ -9,7 +9,7 @@ export class Node<Data extends IData> implements INode {
     public data: Data,
     private score: IScore,
   ) {
-    this.depth = this.parent.depth + 1;
+    this.depth = (this.parent?.depth ?? 0) + 1;
   }
 
   public id(): string {
@@ -17,7 +17,7 @@ export class Node<Data extends IData> implements INode {
     for (const ancestor of this.ancestors()) {
       ids.push(ancestor.data.id);
     }
-    return ids.sort().join('.');
+    return ids.join('.');
   }
 
   private _g: number | null = null;
@@ -49,7 +49,7 @@ export class Node<Data extends IData> implements INode {
 
   private * ancestors(): Iterable<Node<Data>> {
     let node: Node<Data> = this;
-    if (!(node.parent instanceof Root)) {
+    while (!(node.parent instanceof Root)) {
       yield node.parent;
       node = node.parent;
     }
@@ -60,7 +60,7 @@ export class Node<Data extends IData> implements INode {
     for (const ancestor of this.ancestors()) {
       data.push(ancestor.data);
     }
-    return data.reverse()
+    return data.reverse();
   }
 }
 

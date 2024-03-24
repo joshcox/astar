@@ -1,4 +1,4 @@
-import { Node, NodeFactory, Score, IData, IGoal, AStar, ScoreFactory, IScoreOptions, SubScore } from "./index";
+import { Node, Score, IData, IGoal, AStar, IScoreOptions, SubScore } from "../src/index";
 
 class Data implements IData {
   id: string;
@@ -42,12 +42,13 @@ export class Selector {
     this.candidateSet.map(exercise => ({ id: exercise.slug, exercise }));
 
   public select(goal: Goal): Data[] | null {
-    return new AStar(
-      new NodeFactory(
-        new ScoreFactory(SelectorScore, this.scoreOptions),
-        this.successorDataFactory
-      )
-    ).searchFromRoot(goal);
+    return new AStar({
+      score: {
+        constructor: SelectorScore,
+        options: this.scoreOptions,
+      },
+      successorDataFactory: this.successorDataFactory,
+    }).searchFromRoot(goal);
   }
 }
 

@@ -1,11 +1,27 @@
-import { NodeSet } from "node.set";
-import { NodeFactory } from "node.factory";
-import { IData, IGoal, IScoreConstructor, IScoreOptions } from "types";
-import { NodeQueue } from "node.queue";
-import { Node } from "node";
+import { NodeSet } from "./node.set";
+import { NodeFactory } from "./node.factory";
+import { IData, IGoal, IScoreConstructor, IScoreOptions } from "./types";
+import { NodeQueue } from "./node.queue";
+import { Node } from "./node";
+import { ScoreFactory } from "./score.factory";
+
+interface AStarOptions<Data extends IData> {
+  score: {
+    constructor: IScoreConstructor;
+    options: IScoreOptions;
+  },
+  successorDataFactory: (node: Node<Data>) => Data[];
+}
 
 export class AStar<Data extends IData>{
-  constructor(private nodeFactory: NodeFactory<Data>) { }
+  private nodeFactory: NodeFactory<Data>;
+
+  constructor(options: AStarOptions<Data>) {
+    this.nodeFactory = new NodeFactory(
+      new ScoreFactory(options.score.constructor, options.score.options),
+      options.successorDataFactory
+    );
+  }
 
   public searchFromRoot(goal: IGoal): Data[] | null {
     return this._search(this.nodeFactory.createRoot(), goal);

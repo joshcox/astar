@@ -1,5 +1,5 @@
-import { assertsIsNumber } from "assertions";
-import { Score } from "score";
+import { assertsIsNumber } from "./assertions";
+import { Score } from "./score";
 
 const SUBSCORES = Symbol('SubScores');
 

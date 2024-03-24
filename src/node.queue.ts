@@ -1,7 +1,7 @@
-import { NodeSet } from "node.set";
-import { assertsIsDefined } from "assertions";
+import { NodeSet } from "./node.set";
+import { assertsIsDefined } from "./assertions";
 import TinyQueue from "tinyqueue";
-import { INode } from "types";
+import { INode } from "./types";
 
 export class NodeQueue<Node extends INode> extends NodeSet<Node> {
   private queue = new TinyQueue<Node>([], (a, b) => a.compareF(b));

@@ -1,5 +1,5 @@
-import { Decorators, getSubScores } from "score.decorators";
-import { IData, IGoal, IScore, IScoreOptions } from "types";
+import { Decorators, getSubScores } from "./score.decorators";
+import { IData, IGoal, IScore, IScoreOptions } from "./types";
 
 type Stash = {
   cost: {

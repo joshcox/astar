@@ -1,4 +1,4 @@
-import { INode } from "types";
+import { INode } from "./types";
 
 export class NodeSet<Node extends INode> {
   protected ids = new Set<string>();
