@@ -1,31 +1,34 @@
 import { AStar, Node, Score, IData, IGoal, IScoreOptions } from "../src";
 
-export class Point implements IGoal, IData {
+export class Point implements IData {
+  public id: string;
+
   constructor(public x: number, public y: number) {
     this.id = `${this.x},${this.y}`
   }
-  public id: string;
 
   equals(other: Point): boolean {
     return this.x === other.x && this.y === other.y;
   }
 
+  static adjacent(point: Point): Point[] {
+    return [
+      new Point(point.x + 1, point.y),
+      new Point(point.x - 1, point.y),
+      new Point(point.x, point.y + 1),
+      new Point(point.x, point.y - 1)
+    ];
+  };
+}
+
+export class Goal extends Point implements IGoal {
   satisfiedBy(node: Node<Point>): boolean {
     return this.equals(node.data);
-  }
-
-  getAdjacentMoves(): Point[] {
-    return [
-      new Point(this.x + 1, this.y),
-      new Point(this.x - 1, this.y),
-      new Point(this.x, this.y + 1),
-      new Point(this.x, this.y - 1)
-    ];
   }
 }
 
 class ManhattanScore extends Score {
-  declare goal: Point;
+  declare goal: Goal;
   declare data: Point;
 
   public baseCost = () => 1;
@@ -33,13 +36,13 @@ class ManhattanScore extends Score {
 }
 
 export class GridRobot {
-  go(start: Point, goal: Point): Point[] | null {
+  go(start: Point, goal: Goal): Point[] | null {
     return new AStar<Point>({
       score: {
         constructor: ManhattanScore,
         options: <IScoreOptions>{},
       },
-      successorDataFactory: node => node.data.getAdjacentMoves(),
+      successorDataFactory: node => Point.adjacent(node.data),
     }).search(start, goal);
   }
 }
