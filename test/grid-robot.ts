@@ -1,4 +1,4 @@
-import { Modifier } from "../src/score.modifier";
+import { Binary, Cost } from "../src/score.modifier";
 import { Score } from "../src/score";
 import { AStar, Node, IData, IGoal, IScoreOptions, IScore } from "../src";
 
@@ -41,8 +41,8 @@ class ManhattanScore implements IScore {
 
   public heuristic = () => this.goal.distance(this.data);
 
-  @Modifier.Cost.Discount
-  @Modifier.Binary
+  @Cost.Discount
+  @Binary
   public isEven(): boolean {
     return this.data.x % 2 === 0;
   };
@@ -51,10 +51,8 @@ class ManhattanScore implements IScore {
 export class GridRobot {
   go(start: Point, goal: Goal): Point[] | null {
     return new AStar<Point, Goal>({
-      score: {
-        constructor: ManhattanScore,
-        options: <IScoreOptions>{}
-      },
+      Score: ManhattanScore,
+      scoreOptions: <IScoreOptions>{},
       successors: node => Point.adjacent(node.data),
     }).search(start, goal);
   }

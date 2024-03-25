@@ -40,7 +40,7 @@ function Modify(classification: Classification): MethodDecorator {
       const result = sooper.apply(this, args);
       assertsIsNumber(result);
       const { type, modifier } = parseClassification(classification);
-      const weight = this.options[type][modifier][name] ?? 0
+      const weight = this.options?.[type]?.[modifier]?.[name] ?? 0
       return result * weight;
     };
 
@@ -52,21 +52,19 @@ function Modify(classification: Classification): MethodDecorator {
   };
 }
 
-function Binary(_: Object, __: string | symbol, descriptor: PropertyDescriptor): void {
+export function Binary(_: Object, __: string | symbol, descriptor: PropertyDescriptor): void {
   const sooper = descriptor.value;
   descriptor.value = function (...args: any[]): number {
     return sooper.apply(this, args) ? 1 : 0;
   };
 }
 
-export const Modifier = {
-  Binary,
-  Cost: {
-    Discount: Modify('cost:discount'),
-    Penalty: Modify('cost:penalty'),
-  },
-  Heuristic: {
-    Discount: Modify('heuristic:discount'),
-    Penalty: Modify('heuristic:penalty')
-  }
+export const Cost = {
+  Discount: Modify('cost:discount'),
+  Penalty: Modify('cost:penalty'),
+};
+
+export const Heuristic = {
+  Discount: Modify('heuristic:discount'),
+  Penalty: Modify('heuristic:penalty')
 };

@@ -1,5 +1,5 @@
 import { Score } from "score";
-import { Node, IData, IGoal, AStar, IScoreOptions, IScore, Modifier } from "../src/index";
+import { Node, IData, IGoal, AStar, IScoreOptions, IScore, Cost, Binary, Heuristic } from "../src/index";
 
 class Data implements IData {
   id: string;
@@ -20,14 +20,14 @@ class SelectorScore implements IScore {
   public cost = () => 1;
   public heuristic = () => (this.goal.size ?? 0) - this.data.id.length;
 
-  @Modifier.Cost.Discount
-  @Modifier.Binary
+  @Cost.Discount
+  @Binary
   public squat(): boolean {
     return this.data.exercise.slug === 'squat';
   }
 
-  @Modifier.Heuristic.Penalty
-  @Modifier.Binary
+  @Heuristic.Penalty
+  @Binary
   public anyUnilaterals(): boolean {
     return false;
   }
@@ -44,10 +44,8 @@ export class Selector {
 
   public select(goal: Goal): Data[] | null {
     return new AStar({
-      score: {
-        constructor: SelectorScore,
-        options: this.scoreOptions,
-      },
+      Score: SelectorScore,
+      scoreOptions: this.scoreOptions,
       successors: this.successorDataFactory,
     }).searchFromRoot(goal);
   }

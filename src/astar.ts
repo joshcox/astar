@@ -6,10 +6,8 @@ import { Node } from "./node";
 import { ScoreFactory } from "./score.factory";
 
 interface AStarOptions<Data extends IData, Goal extends IGoal> {
-  score: {
-    constructor: IScoreConstructor<Data, Goal, IScore>;
-    options: IScoreOptions;
-  },
+  Score: IScoreConstructor<Data, Goal, IScore>;
+  scoreOptions: IScoreOptions;
   successors: (node: Node<Data>) => Data[];
 }
 
@@ -18,7 +16,7 @@ export class AStar<Data extends IData, Goal extends IGoal>{
 
   constructor(options: AStarOptions<Data, Goal>) {
     this.nodeFactory = new NodeFactory(
-      new ScoreFactory(options.score.constructor, options.score.options),
+      new ScoreFactory(options.Score, options.scoreOptions),
       options.successors
     );
   }
