@@ -1,5 +1,3 @@
-Certainly! I'll provide a comprehensive technical design overview for this A* search algorithm implementation, focusing on the project's philosophy, design patterns, and overall structure. I'll avoid getting into specific code details unless absolutely necessary.
-
 ## Project Philosophy and Design
 
 The core philosophy of this A* search algorithm implementation is to provide a flexible, efficient, and type-safe solution that can be easily adapted to various pathfinding and problem-solving scenarios. The project emphasizes encapsulation and modularity, leading to a more intuitive consumer experience.
