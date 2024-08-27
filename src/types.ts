@@ -5,7 +5,7 @@
  * It provides the foundation for the data structures and objects used in the search process,
  * ensuring type safety and consistency across the codebase.
  *
- * The interfaces and types defined here are crucial for:
+ * The interfaces and types defined here are for:
  * 1. Defining the structure of nodes in the search tree
  * 2. Specifying the requirements for goal states
  * 3. Establishing the scoring system used in the A* algorithm

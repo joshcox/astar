@@ -5,7 +5,7 @@
  * It defines decorators and functions for handling cost and heuristic calculations, including
  * modifiers like discounts and penalties.
  *
- * The module plays a crucial role in the A* implementation by:
+ * The module plays a role in the A* implementation by:
  * 1. Providing a decorator to mark classes that implement scoring logic
  * 2. Managing score modifiers (discounts and penalties) for both cost and heuristic calculations
  * 3. Offering functions to calculate final cost and heuristic values

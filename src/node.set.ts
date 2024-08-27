@@ -5,7 +5,7 @@ import { INode } from "./types";
  * It provides basic set operations for managing nodes, ensuring that each node
  * is uniquely identified by its ID.
  *
- * This class plays a crucial role in the A* algorithm by:
+ * This class plays a role in the A* algorithm by:
  * 1. Maintaining a set of unique node IDs
  * 2. Providing methods to check for node existence
  * 3. Allowing the addition of new nodes to the set

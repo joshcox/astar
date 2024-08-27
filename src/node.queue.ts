@@ -7,7 +7,7 @@ import { INode } from "./types";
  * NodeQueue class represents a priority queue of nodes used in the A* search algorithm.
  * It extends the NodeSet class and uses TinyQueue for efficient priority queue operations.
  *
- * This class plays a crucial role in the A* algorithm by:
+ * This class plays a role in the A* algorithm by:
  * 1. Maintaining a priority queue of nodes based on their f-score
  * 2. Ensuring efficient insertion and removal of nodes
  * 3. Keeping track of unique node IDs

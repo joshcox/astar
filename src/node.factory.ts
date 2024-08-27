@@ -6,7 +6,7 @@ import { Root, Node } from "./node";
  * It implements the INodeFactory interface and provides methods to create root nodes, child nodes,
  * and generate successors for a given node.
  *
- * This class plays a crucial role in the A* search algorithm by:
+ * This class plays a role in the A* search algorithm by:
  * 1. Creating the initial root node
  * 2. Generating child nodes with appropriate scores
  * 3. Producing successor nodes for expanding the search

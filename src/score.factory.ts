@@ -4,7 +4,7 @@ import { IData, IGoal, IScore, IScoreConstructor, IScoreFactory, IScoreOptions }
  * ScoreFactory class implements the IScoreFactory interface and is responsible for creating
  * score objects used in the A* search algorithm.
  *
- * This class plays a crucial role in the A* implementation by:
+ * This class plays a role in the A* implementation by:
  * 1. Encapsulating the logic for creating score objects
  * 2. Providing a consistent interface for score creation across the algorithm
  * 3. Allowing for easy customization of score creation through its constructor parameters
