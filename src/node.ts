@@ -1,4 +1,4 @@
-import { memoize } from "memoize";
+import { memoize } from "./memoize";
 import { cost, heuristic } from "./score";
 import { IData, INode, IScore } from "./types";
 
@@ -53,6 +53,13 @@ export class Node<Data extends IData> implements INode {
     return cost(this.score);
   }
 
+  @memoize
+  private gStar(): number {
+    let g = 0;
+    for (const node of this.ancestors()) g += node.g();
+    return g;
+  }
+
   /**
    * Calculates the estimated cost from this node to the goal (h-score).
    * The result is memoized for performance optimization.
@@ -71,7 +78,7 @@ export class Node<Data extends IData> implements INode {
    * @returns {number} The f-score of the node
    */
   public f(): number {
-    return [...this.ancestors()].reduce((acc, node) => acc + node.g(), 0) + this.h();
+    return this.gStar() + this.h();
   }
 
   /**
@@ -135,6 +142,6 @@ export class Root<Data extends IData> extends Node<Data> {
    * Initializes with null parent, a root data object, and null score.
    */
   constructor() {
-    super(<Node<Data>>null, <Data>{ id: 'root' }, <IScore>null);
+    super(<Node<Data>><unknown>null, <Data>{ id: 'root' }, <IScore><unknown>null);
   }
 }

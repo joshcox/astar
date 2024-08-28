@@ -69,3 +69,33 @@ export function assertsIsNumber(value: any): asserts value is number {
     throw new Error('Value is not a number');
   }
 }
+
+/**
+ * Type guard function to check if a value is a string.
+ *
+ * @param {any} value - The value to check
+ * @returns {value is string} - Type predicate indicating whether the value is a string
+ * @private
+ */
+const isString = (value: any): value is string => typeof value === 'string';
+
+/**
+ * Assertion function to ensure a value is a string.
+ * Throws an error if the value is not a string.
+ *
+ * @param {any} value - The value to assert
+ * @throws {Error} Throws an error if the value is not a string
+ * @example
+ * import { assertsIsString } from './assertions';
+ *
+ * function processName(name: any) {
+ *   assertsIsString(name);
+ *   // Now we can safely use string methods on name
+ *   console.log(name.toUpperCase());
+ * }
+ */
+export function assertsIsString(value: any): asserts value is string {
+  if (!isString(value)) {
+    throw new Error('Value is not a string');
+  }
+}

@@ -17,11 +17,11 @@ export class ScoreFactory<Data extends IData, Goal extends IGoal> implements ISc
   /**
    * Creates an instance of ScoreFactory.
    *
-   * @param {IScoreConstructor<Data, Goal, IScore>} Score - Constructor for creating score objects
+   * @param {IScoreConstructor<Data, Goal, IScore>} ScoreConstructor - Constructor for creating score objects
    * @param {IScoreOptions} options - Options to be passed to the score constructor
    */
   constructor(
-    private Score: IScoreConstructor<Data, Goal, IScore>,
+    private ScoreConstructor: IScoreConstructor<Data, Goal, IScore>,
     private options: IScoreOptions
   ) { }
 
@@ -34,6 +34,6 @@ export class ScoreFactory<Data extends IData, Goal extends IGoal> implements ISc
    * @returns {IScore} A new score object
    */
   createScore(goal: Goal, data: Data): IScore {
-    return new this.Score(data, goal, this.options);
+    return new this.ScoreConstructor(data, goal, this.options);
   }
 }

@@ -52,8 +52,8 @@ export const Score = (target: Function) => {
   const subScores = getModifiers(target);
 
   const stash = subScores.reduce((stash, { classification, method }) => {
-    const { type, modifier } = classification;
-    stash[type][modifier].push(method);
+    const { category, effect } = classification;
+    stash[category][effect].push(method);
     return stash;
   }, buildStash());
 

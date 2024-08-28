@@ -80,7 +80,8 @@ export interface IScoreOptions {
  * Defines the constructor signature for score objects.
  * This type is used to ensure consistency when creating new score instances.
  */
-export type IScoreConstructor<Data extends IData, Goal extends IGoal, Score extends IScore> = new (data: Data, goal: Goal, options: IScoreOptions) => Score;
+export type IScoreConstructor<Data extends IData, Goal extends IGoal, Score extends IScore> =
+  new (data: Data, goal: Goal, options: IScoreOptions) => Score;
 
 /**
  * Represents a factory for creating score objects.
@@ -160,9 +161,6 @@ export interface INode {
  * This interface defines methods for node creation and successor generation.
  */
 export interface INodeFactory {
-  /** The score factory used to create scores for nodes. */
-  scoreFactory: IScoreFactory;
-
   /**
    * Creates the root node of the search tree.
    * @returns The root node.

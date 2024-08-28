@@ -22,7 +22,7 @@ export class NodeFactory<Data extends IData> implements INodeFactory {
    * @param {(node: Node<Data>) => Data[]} successorDataFactory - Function to generate successor data for a given node
    */
   constructor(
-    public scoreFactory: IScoreFactory,
+    private scoreFactory: IScoreFactory,
     private successorDataFactory: (node: Node<Data>) => Data[]
   ) { }
 

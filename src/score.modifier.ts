@@ -1,25 +1,11 @@
-import { assertsIsNumber } from "./assertions";
+import { assertsIsNumber, assertsIsString } from "./assertions";
 import { IScoreOptions } from "./types";
 
-const SUBSCORES = Symbol('SubScores');
+const MODIFIERS = Symbol('Modifiers');
 
-type SubScoreType = 'cost' | 'heuristic';
-
-type ModifierType = 'discount' | 'penalty';
-
-type Classification = `${SubScoreType}:${ModifierType}`;
-
-type ParsedClassification = { type: SubScoreType, modifier: ModifierType };
-
-/**
- * Parses a classification string into a ParsedClassification object.
- * @param {Classification} classification - The classification string to parse
- * @returns {ParsedClassification} The parsed classification object
- * @private
- */
-const parseClassification = (classification: Classification): ParsedClassification => {
-  const [type, modifier] = classification.split(':') as [SubScoreType, ModifierType];
-  return { type, modifier };
+type ModifierDescriptor = {
+  category: 'cost' | 'heuristic',
+  effect: 'discount' | 'penalty'
 };
 
 export interface ModifierMethod { (): number }
@@ -28,57 +14,52 @@ export interface ModifierMethod { (): number }
  * Type definition for modifier metadata.
  * This includes the classification of the modifier, its key, and the method itself.
  * @typedef {Object} ModifierMetadata
- * @property {ParsedClassification} classification - The parsed classification of the modifier
+ * @property {ModifierDescriptor} classification - The parsed classification of the modifier
  * @property {string} key - The key or name of the modifier
  * @property {ModifierMethod} method - The modifier method
  */
-type ModifierMetadata = { classification: ParsedClassification, key: string, method: ModifierMethod };
+type ModifierMetadata = { classification: ModifierDescriptor, key: string, method: ModifierMethod };
 
 /**
  * Retrieves all modifiers defined on a target class.
  * @param {Function} target - The constructor function of the class
  * @returns {ModifierMetadata[]} An array of modifier metadata
  */
-export const getModifiers = (target: Function): ModifierMetadata[] => {
-  const subScores = Reflect.getMetadata(SUBSCORES, target);
-  return subScores ?? [];
-};
+export const getModifiers = (target: Function): ModifierMetadata[] =>
+  Reflect.getMetadata(MODIFIERS, target) ?? [];
 
 /**
  * Adds a modifier to the target class's metadata.
  * @param {Function} target - The constructor function of the class
  * @param {ModifierMetadata} metadata - The metadata of the modifier to add
  */
-export const addModifier = (target: Function, metadata: ModifierMetadata): void => {
-  Reflect.defineMetadata(SUBSCORES, getModifiers(target).concat([metadata]), target);
-};
+export const addModifier = (target: Function, metadata: ModifierMetadata): void =>
+  Reflect.defineMetadata(MODIFIERS, getModifiers(target).concat([metadata]), target);
 
 /**
  * Decorator factory for modifying score calculations.
  * This decorator applies the specified classification to the method and
  * adds it to the list of modifiers for the class.
  *
- * @param {Classification} classification - The classification of the score modifier.
+ * @param {ModifierDescriptor} classification - The classification of the score modifier.
  * @returns {MethodDecorator} A decorator function that modifies the method.
  */
-function Modify(classification: Classification): MethodDecorator {
+function Modifier({ category, effect }: ModifierDescriptor): MethodDecorator {
   return (target: Object, key: string | symbol, descriptor: PropertyDescriptor): void => {
-    const name = typeof key === 'string'
-      ? key
-      : key.description;
+    assertsIsString(key);
 
     const sooper = descriptor.value;
+
     descriptor.value = function (this: { options: IScoreOptions }, ...args: any[]): number {
       const result = sooper.apply(this, args);
       assertsIsNumber(result);
-      const { type, modifier } = parseClassification(classification);
-      const weight = this.options?.[type]?.[modifier]?.[name] ?? 0
+      const weight = this.options?.[category]?.[effect]?.[key] ?? 0;
       return result * weight;
     };
 
     addModifier(target.constructor, {
-      classification: parseClassification(classification),
-      key: name,
+      classification: { category, effect },
+      key,
       method: descriptor.value,
     });
   };
@@ -108,13 +89,13 @@ export const Cost = {
    * Decorator for applying a discount to the cost calculation.
    * @type {MethodDecorator}
    */
-  Discount: Modify('cost:discount'),
+  Discount: Modifier({ category: 'cost', effect: 'discount' }),
 
   /**
    * Decorator for applying a penalty to the cost calculation.
    * @type {MethodDecorator}
    */
-  Penalty: Modify('cost:penalty'),
+  Penalty: Modifier({ category: 'cost', effect: 'penalty' }),
 };
 
 /**
@@ -126,11 +107,11 @@ export const Heuristic = {
    * Decorator for applying a discount to the heuristic calculation.
    * @type {MethodDecorator}
    */
-  Discount: Modify('heuristic:discount'),
+  Discount: Modifier({ category: 'heuristic', effect: 'discount' }),
 
   /**
    * Decorator for applying a penalty to the heuristic calculation.
    * @type {MethodDecorator}
    */
-  Penalty: Modify('heuristic:penalty')
+  Penalty: Modifier({ category: 'heuristic', effect: 'penalty' }),
 };

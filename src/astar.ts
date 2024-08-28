@@ -21,6 +21,7 @@ import { IData, IGoal, IScore, IScoreConstructor, IScoreOptions } from "./types"
 import { NodeQueue } from "./node.queue";
 import { Node } from "./node";
 import { ScoreFactory } from "./score.factory";
+import { assertsIsDefined } from "./assertions";
 
 /**
  * Configuration options for the AStar algorithm.
@@ -100,6 +101,7 @@ export class AStar<Data extends IData, Goal extends IGoal> {
 
     while (open.length > 0) {
       const node = open.pop();
+      assertsIsDefined(node);
       // If the node has already been evaluated, skip it
       if (closed.has(node)) {
         continue;
