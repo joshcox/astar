@@ -1,5 +1,4 @@
 import { NodeSet } from "./node.set";
-import { assertsIsDefined } from "./assertions";
 import TinyQueue from "tinyqueue";
 import { INode } from "./types";
 
@@ -62,8 +61,7 @@ export class NodeQueue<Node extends INode> {
    */
   public pop(): Node | undefined {
     const node = this.queue.pop();
-    assertsIsDefined(node);
-    this.set.delete(node);
+    if (node) { this.set.delete(node) };
     return node;
   }
 }

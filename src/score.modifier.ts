@@ -53,6 +53,7 @@ function Modifier({ category, effect }: ModifierDescriptor): MethodDecorator {
     descriptor.value = function (this: { options: IScoreOptions }, ...args: any[]): number {
       const result = sooper.apply(this, args);
       assertsIsNumber(result);
+      // When no modifier weight is defined, the default is 0, which functionally disables the modifier
       const weight = this.options?.[category]?.[effect]?.[key] ?? 0;
       return result * weight;
     };
