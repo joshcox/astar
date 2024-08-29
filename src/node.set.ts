@@ -27,7 +27,7 @@ export class NodeSet<Node extends INode> {
    *
    * @returns {number} The number of nodes in the set.
    */
-  public get length(): number {
+  public get size(): number {
     return this.ids.size;
   }
 
