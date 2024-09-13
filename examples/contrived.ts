@@ -23,7 +23,7 @@ class ContrivedScore implements IScore {
 export const createContrivedStar = <G extends IGoal>() =>
   new AStar<ContrivedData, G>({
     Score: ContrivedScore,
-    scoreOptions: {
+    weights: {
       cost: {
         discount: {},
         penalty: {},

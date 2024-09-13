@@ -1,7 +1,7 @@
 import { AStar } from "../src/astar";
 import { Node } from "../src/node";
 import { Score } from "../src/score";
-import { IData, IGoal, IScore, IScoreOptions } from "../src/types";
+import { IData, IGoal, IScore, IScoreWeights } from "../src/types";
 
 /**
  * Represents a point in a 2D grid.
@@ -34,7 +34,7 @@ export class Goal extends Point implements IGoal {
  */
 @Score
 class ManhattanScore implements IScore {
-  constructor(private data: Point, private goal: Goal, public options: IScoreOptions) { }
+  constructor(private data: Point, private goal: Goal) { }
   public cost = () => 1;
   public heuristic = () => this.goal.distance(this.data);
 }
@@ -45,6 +45,6 @@ class ManhattanScore implements IScore {
  */
 export default () => new AStar<Point, Goal>({
   Score: ManhattanScore,
-  scoreOptions: <IScoreOptions>{},
+  weights: {},
   successors: node => Point.adjacent(node.data),
 });

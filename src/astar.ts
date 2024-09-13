@@ -38,7 +38,7 @@ interface AStarOptions<Data extends IData, Goal extends IGoal> {
   /**
    * Options for configuring the scoring mechanism.
    */
-  scoreOptions: IScoreWeights;
+  weights: IScoreWeights;
 
   /**
    * Function to generate successor nodes for a given node.
@@ -63,7 +63,7 @@ export class AStar<Data extends IData, Goal extends IGoal> {
    */
   constructor(options: AStarOptions<Data, Goal>) {
     this.nodeFactory = new NodeFactory(
-      new ScoreFactory(options.Score, options.scoreOptions),
+      new ScoreFactory(options.Score, options.weights),
       options.successors
     );
   }
