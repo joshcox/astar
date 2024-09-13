@@ -17,7 +17,7 @@
 
 import { NodeSet } from "./node.set";
 import { NodeFactory } from "./node.factory";
-import { IData, IGoal, IScore, IScoreConstructor, IScoreOptions } from "./types";
+import { IData, IGoal, IScore, IScoreConstructor, IScoreWeights } from "./types";
 import { NodeQueue } from "./node.queue";
 import { Node } from "./node";
 import { ScoreFactory } from "./score.factory";
@@ -38,7 +38,7 @@ interface AStarOptions<Data extends IData, Goal extends IGoal> {
   /**
    * Options for configuring the scoring mechanism.
    */
-  scoreOptions: IScoreOptions;
+  scoreOptions: IScoreWeights;
 
   /**
    * Function to generate successor nodes for a given node.

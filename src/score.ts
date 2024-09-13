@@ -12,16 +12,136 @@
  */
 
 import { IScore } from "./types";
-import { getModifiers, ModifierMethod } from "./score.modifier";
+import { assertsIsNumber, assertsIsString } from "./assertions";
+import { IScoreWeights } from "./types";
 
+const MODIFIERS = Symbol('Modifiers');
+
+type ModifierDescriptor = {
+  category: 'cost' | 'heuristic',
+  effect: 'discount' | 'penalty'
+};
+
+interface ModifierMethod { (): number }
+
+/**
+ * Type definition for modifier metadata.
+ * This includes the classification of the modifier, its key, and the method itself.
+ * @typedef {Object} ModifierMetadata
+ * @property {ModifierDescriptor} classification - The parsed classification of the modifier
+ * @property {string} key - The key or name of the modifier
+ * @property {ModifierMethod} method - The modifier method
+ */
+type ModifierMetadata = { classification: ModifierDescriptor, key: string, method: ModifierMethod };
+
+/**
+ * Retrieves all modifiers defined on a target class.
+ * @param {Function} target - The constructor function of the class
+ * @returns {ModifierMetadata[]} An array of modifier metadata
+ */
+const getModifiers = (target: Function): ModifierMetadata[] =>
+  Reflect.getMetadata(MODIFIERS, target) ?? [];
+
+/**
+ * Adds a modifier to the target class's metadata.
+ * @param {Function} target - The constructor function of the class
+ * @param {ModifierMetadata} metadata - The metadata of the modifier to add
+ */
+const addModifier = (target: Function, metadata: ModifierMetadata): void =>
+  Reflect.defineMetadata(MODIFIERS, getModifiers(target).concat([metadata]), target);
+
+/**
+ * Decorator factory for modifying score calculations.
+ * This decorator applies the specified classification to the method and
+ * adds it to the list of modifiers for the class.
+ *
+ * @param {ModifierDescriptor} classification - The classification of the score modifier.
+ * @returns {MethodDecorator} A decorator function that modifies the method.
+ */
+function Modifier({ category, effect }: ModifierDescriptor): MethodDecorator {
+  return (target: Object, key: string | symbol, descriptor: PropertyDescriptor): void => {
+    assertsIsString(key);
+
+    const sooper = descriptor.value;
+
+    descriptor.value = function (this: { weights: IScoreWeights }, ...args: any[]): number {
+      const result = sooper.apply(this, args);
+      assertsIsNumber(result);
+      // When no modifier weight is defined, the default is 0, which functionally disables the modifier
+      const weight = this.weights?.[category]?.[effect]?.[key] ?? 0;
+      return result * weight;
+    };
+
+    addModifier(target.constructor, {
+      classification: { category, effect },
+      key,
+      method: descriptor.value,
+    });
+  };
+}
+
+/**
+ * Decorator that converts a method's return value to a binary (0 or 1) value.
+ * This is useful for boolean conditions in score calculations.
+ *
+ * @param {Object} _ - The target object (unused)
+ * @param {string | symbol} __ - The property key (unused)
+ * @param {PropertyDescriptor} descriptor - The property descriptor
+ */
+export function Binary(_: Object, __: string | symbol, descriptor: PropertyDescriptor): void {
+  const sooper = descriptor.value;
+  descriptor.value = function (...args: any[]): number {
+    return sooper.apply(this, args) ? 1 : 0;
+  };
+}
+
+/**
+ * Object containing decorators for cost modifications.
+ * @namespace
+ */
+export const Cost = {
+  /**
+   * Decorator for applying a discount to the cost calculation.
+   * @type {MethodDecorator}
+   */
+  Discount: Modifier({ category: 'cost', effect: 'discount' }),
+
+  /**
+   * Decorator for applying a penalty to the cost calculation.
+   * @type {MethodDecorator}
+   */
+  Penalty: Modifier({ category: 'cost', effect: 'penalty' }),
+};
+
+/**
+ * Object containing decorators for heuristic modifications.
+ * @namespace
+ */
+export const Heuristic = {
+  /**
+   * Decorator for applying a discount to the heuristic calculation.
+   * @type {MethodDecorator}
+   */
+  Discount: Modifier({ category: 'heuristic', effect: 'discount' }),
+
+  /**
+   * Decorator for applying a penalty to the heuristic calculation.
+   * @type {MethodDecorator}
+   */
+  Penalty: Modifier({ category: 'heuristic', effect: 'penalty' }),
+};
+
+/**
+ * Type definition for the Stash object, which holds arrays of modifier methods for cost and heuristic calculations.
+ */
 type Stash = {
   cost: {
-    discount: ModifierMethod[];
-    penalty: ModifierMethod[];
+    discount: [name: string, method: ModifierMethod][];
+    penalty: [name: string, method: ModifierMethod][];
   };
   heuristic: {
-    discount: ModifierMethod[];
-    penalty: ModifierMethod[];
+    discount: [name: string, method: ModifierMethod][];
+    penalty: [name: string, method: ModifierMethod][];
   };
 };
 
@@ -40,7 +160,58 @@ const buildStash = (): Stash => ({
  * @constant {Symbol}
  * @private
  */
-const SCORE = Symbol('Score');
+const COMPUTE_SCORE = Symbol('computeScoreMethod');
+const COMPUTED_SCORE = Symbol('computedScore');
+const COMPUTE_SUBSCORES = Symbol('computeSubScoresMethod');
+const COMPUTED_SUBSCORES = Symbol('computedSubScores');
+
+
+// Add this new type definition
+type ComputedScores = {
+  baseCost: number;
+  baseHeuristic: number;
+  modifiers: {
+    cost: { discount: Record<string, number>; penalty: Record<string, number> };
+    heuristic: { discount: Record<string, number>; penalty: Record<string, number> };
+  };
+};
+
+function computeSubScores(this: IScore & { [COMPUTED_SUBSCORES]: ComputedScores, [COMPUTED_SCORE]: number }, stash: Stash): ComputedScores {
+  return {
+    baseCost: this.cost(),
+    baseHeuristic: this.heuristic(),
+    modifiers: {
+      cost: {
+        discount: stash.cost.discount.reduce((acc, [name, method]) => ({ ...acc, [name]: method.apply(this) }), {}),
+        penalty: stash.cost.penalty.reduce((acc, [name, method]) => ({ ...acc, [name]: method.apply(this) }), {})
+      },
+      heuristic: {
+        discount: stash.heuristic.discount.reduce((acc, [name, method]) => ({ ...acc, [name]: method.apply(this) }), {}),
+        penalty: stash.heuristic.penalty.reduce((acc, [name, method]) => ({ ...acc, [name]: method.apply(this) }), {})
+      }
+    }
+  };
+};
+
+function computeScore(this: IScore & { [COMPUTED_SUBSCORES]: ComputedScores, [COMPUTED_SCORE]: number }, computedSubScores: ComputedScores): number {
+  const cost = computedSubScores.baseCost
+    - sum(Object.values(computedSubScores.modifiers.cost.discount))
+    + sum(Object.values(computedSubScores.modifiers.cost.penalty));
+
+  const heuristic = computedSubScores.baseHeuristic
+    - sum(Object.values(computedSubScores.modifiers.heuristic.discount))
+    + sum(Object.values(computedSubScores.modifiers.heuristic.penalty));
+
+  return cost + heuristic;
+}
+
+type DecoratedIScore = IScore & {
+  [COMPUTE_SUBSCORES]: () => ComputedScores,
+  [COMPUTED_SUBSCORES]: ComputedScores,
+  [COMPUTE_SCORE]: () => number,
+  [COMPUTED_SCORE]: number
+};
+
 
 /**
  * Decorator function to mark a class as a score provider.
@@ -49,28 +220,31 @@ const SCORE = Symbol('Score');
  * @param {Function} target - The constructor function of the decorated class
  */
 export const Score = (target: Function) => {
-  const subScores = getModifiers(target);
+  const modifiers = getModifiers(target);
 
-  const stash = subScores.reduce((stash, { classification, method }) => {
+  const stash = modifiers.reduce((stash, { classification, key, method }) => {
     const { category, effect } = classification;
-    stash[category][effect].push(method);
+    stash[category][effect].push([key, method]);
     return stash;
   }, buildStash());
 
-  Reflect.defineMetadata(SCORE, stash, target);
-};
+  // Decorate the target class with the ability to compute sub scores
+  target.prototype[COMPUTE_SUBSCORES] = function (this: DecoratedIScore) {
+    if (typeof this[COMPUTED_SUBSCORES] !== 'object') {
+      this[COMPUTED_SUBSCORES] = computeSubScores.call(this, stash);
+    }
 
-/**
- * Retrieves the score metadata (Stash) from a given target.
- * @param {Function} target - The constructor function to retrieve metadata from
- * @returns {Stash} The score metadata
- * @throws {Error} If the Score decorator hasn't been applied to the target
- * @private
- */
-const getScore = (target: Function): Stash => {
-  const stash = Reflect.getMetadata(SCORE, target);
-  if (!stash) throw new Error('Must use @Score decorator to use cost or heuristic functions');
-  return stash;
+    return this[COMPUTED_SUBSCORES];
+  };
+
+  // Decorate the target class with the ability to compute the final score
+  target.prototype[COMPUTE_SCORE] = function (this: DecoratedIScore) {
+    if (typeof this[COMPUTED_SCORE] !== 'number') {
+      this[COMPUTED_SCORE] = computeScore.call(this, this[COMPUTE_SUBSCORES]());
+    }
+
+    return this[COMPUTED_SCORE];
+  };
 };
 
 /**
@@ -81,30 +255,20 @@ const getScore = (target: Function): Stash => {
  */
 const sum = (nums: number[]): number => Math.max(nums.reduce((acc, n) => acc + n, 0), 0);
 
-/**
- * Calculates the final cost value for a given score target.
- * This function applies all registered cost modifiers (discounts and penalties).
- *
- * @param {IScore} target - The score object to calculate the cost for
- * @returns {number} The final calculated cost value
- */
-export const cost = (target: IScore): number => {
-  const stash = getScore(target.constructor);
-  return target.cost()
-    - sum(stash.cost.discount.map(d => d.apply(target)))
-    + sum(stash.cost.penalty.map(p => p.apply(target)));
+// Add this new function
+export const score = (target: any): number => {
+  if (typeof target[COMPUTE_SCORE] !== 'function') {
+    throw new Error('Must use @Score decorator to use score function');
+  }
+  return target[COMPUTE_SCORE]();
 };
 
-/**
- * Calculates the final heuristic value for a given score target.
- * This function applies all registered heuristic modifiers (discounts and penalties).
- *
- * @param {IScore} target - The score object to calculate the heuristic for
- * @returns {number} The final calculated heuristic value
- */
-export const heuristic = (target: IScore): number => {
-  const stash = getScore(target.constructor);
-  return target.heuristic()
-    - sum(stash.heuristic.discount.map(d => d.apply(target)))
-    + sum(stash.heuristic.penalty.map(p => p.apply(target)));
+export const verboseScore = (target: any): { score: number, subScores: ComputedScores } => {
+  if (typeof target[COMPUTE_SCORE] !== 'function') {
+    throw new Error('Must use @Score decorator to use score function');
+  }
+  return {
+    score: target[COMPUTE_SCORE](),
+    subScores: target[COMPUTE_SUBSCORES](),
+  };
 };

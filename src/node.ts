@@ -1,5 +1,4 @@
-import { memoize } from "./memoize";
-import { cost, heuristic } from "./score";
+import { score } from "./score";
 import { IData, INode, IScore } from "./types";
 
 /**
@@ -43,42 +42,13 @@ export class Node<Data extends IData> implements INode {
   }
 
   /**
-   * Calculates the cost to reach this node from the start node (g-score).
-   * The result is memoized for performance optimization.
-   *
-   * @returns {number} The g-score of the node
-   */
-  @memoize
-  public g(): number {
-    return cost(this.score);
-  }
-
-  @memoize
-  private gStar(): number {
-    let g = 0;
-    for (const node of this.ancestors()) g += node.g();
-    return g;
-  }
-
-  /**
-   * Calculates the estimated cost from this node to the goal (h-score).
-   * The result is memoized for performance optimization.
-   *
-   * @returns {number} The h-score of the node
-   */
-  @memoize
-  public h(): number {
-    return heuristic(this.score);
-  }
-
-  /**
    * Calculates the total estimated cost of the path through this node (f-score).
    * F-score is the sum of g-scores of all ancestors plus this node's h-score.
    *
    * @returns {number} The f-score of the node
    */
   public f(): number {
-    return this.gStar() + this.h();
+    return score(this.score);
   }
 
   /**

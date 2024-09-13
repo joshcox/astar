@@ -43,6 +43,11 @@ export interface IData {
  */
 export interface IScore {
   /**
+   * Options for weighting the score modifiers.
+  */
+  weights?: IScoreWeights;
+
+  /**
    * Calculates the cost to reach the current node from the start.
    * @returns The cost value.
    */
@@ -59,20 +64,20 @@ export interface IScore {
  * Specifies the structure for score modification options.
  * These options allow for fine-tuning of the A* algorithm's behavior by adjusting cost and heuristic calculations.
  */
-export interface IScoreOptions {
+export interface IScoreWeights {
   /** Options for modifying the cost calculation. */
-  cost: {
+  cost?: {
     /** Discount factors to reduce costs for certain conditions. */
-    discount: Record<string, number>;
+    discount?: Record<string, number>;
     /** Penalty factors to increase costs for certain conditions. */
-    penalty: Record<string, number>;
+    penalty?: Record<string, number>;
   },
   /** Options for modifying the heuristic calculation. */
-  heuristic: {
+  heuristic?: {
     /** Discount factors to reduce heuristic estimates for certain conditions. */
-    discount: Record<string, number>;
+    discount?: Record<string, number>;
     /** Penalty factors to increase heuristic estimates for certain conditions. */
-    penalty: Record<string, number>;
+    penalty?: Record<string, number>;
   }
 }
 
@@ -81,7 +86,7 @@ export interface IScoreOptions {
  * This type is used to ensure consistency when creating new score instances.
  */
 export type IScoreConstructor<Data extends IData, Goal extends IGoal, Score extends IScore> =
-  new (data: Data, goal: Goal, options: IScoreOptions) => Score;
+  new (data: Data, goal: Goal, options?: IScoreWeights) => Score;
 
 /**
  * Represents a factory for creating score objects.
@@ -116,18 +121,6 @@ export interface INode {
    * @returns A string identifier for the node.
    */
   id(): string;
-
-  /**
-   * Calculates the cost to reach this node from the start (g-score).
-   * @returns The g-score of the node.
-   */
-  g(): number;
-
-  /**
-   * Calculates the heuristic estimate from this node to the goal (h-score).
-   * @returns The h-score of the node.
-   */
-  h(): number;
 
   /**
    * Calculates the total estimated cost of the path through this node (f-score).

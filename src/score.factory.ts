@@ -1,4 +1,4 @@
-import { IData, IGoal, IScore, IScoreConstructor, IScoreFactory, IScoreOptions } from "./types";
+import { IData, IGoal, IScore, IScoreConstructor, IScoreFactory, IScoreWeights } from "./types";
 
 /**
  * ScoreFactory class implements the IScoreFactory interface and is responsible for creating
@@ -18,11 +18,11 @@ export class ScoreFactory<Data extends IData, Goal extends IGoal> implements ISc
    * Creates an instance of ScoreFactory.
    *
    * @param {IScoreConstructor<Data, Goal, IScore>} ScoreConstructor - Constructor for creating score objects
-   * @param {IScoreOptions} options - Options to be passed to the score constructor
+   * @param {IScoreWeights} options - Options to be passed to the score constructor
    */
   constructor(
     private ScoreConstructor: IScoreConstructor<Data, Goal, IScore>,
-    private options: IScoreOptions
+    private options: IScoreWeights
   ) { }
 
   /**
